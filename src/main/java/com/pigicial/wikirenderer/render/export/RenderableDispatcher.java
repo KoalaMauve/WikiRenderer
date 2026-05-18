@@ -200,10 +200,10 @@ public class RenderableDispatcher {
                 boolean dontRescale = rescalingDisabled || sameSize || likelyOscillating || batchSecondPass || isAreaTopdown;
 
                 int maxTextureSize = RenderSystem.getDevice().getDeviceInfo().limits().maxTextureSize();
-                boolean tooLarge = newSize > maxTextureSize;
+                boolean tooLarge = newSize >= maxTextureSize;
                 if (tooLarge && !dontRescale) {
                     croppedImage.close();
-                    return CompletableFuture.failedFuture(new RuntimeException("Failed to rescale image (too big, " + newSize + " > max " + maxTextureSize + ")"));
+                    return CompletableFuture.failedFuture(new RuntimeException("Failed to rescale image (too big, " + newSize + " >= max " + maxTextureSize + ")"));
                 }
 
                 if (dontRescale) {
@@ -285,7 +285,7 @@ public class RenderableDispatcher {
         GpuTexture original = renderTarget.getColorTexture();
         assert original != null;
 
-        GpuTexture copy = RenderSystem.getDevice().createTexture(() -> "[IsometricRenders] Copy of: " + original.getLabel(),
+        GpuTexture copy = RenderSystem.getDevice().createTexture(() -> "[WikiRenderer] Copy of: " + original.getLabel(),
                 GpuTexture.USAGE_COPY_DST | GpuTexture.USAGE_COPY_SRC | GpuTexture.USAGE_TEXTURE_BINDING | GpuTexture.USAGE_RENDER_ATTACHMENT,
                 GpuFormat.RGBA8_UNORM, renderTarget.width, renderTarget.height, 1, 1);
 

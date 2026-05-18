@@ -11,6 +11,7 @@ import com.pigicial.wikirenderer.util.Translate;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.Util;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.nio.file.Path;
@@ -40,7 +41,7 @@ public abstract class AnimationHandler implements AutoCloseable {
     protected AnimationHandler(RenderScreen screen, Renderable<?> renderable, int framesToRender) {
         this.screen = screen;
         this.renderable = renderable;
-        this.framesFolderName = "sequence-" + UUID.randomUUID();
+        this.framesFolderName = "sequence_frames/" + UUID.randomUUID();
         this.framesFolder = ExportPathSpec.exportRoot().resolve(this.framesFolderName + "/");
         this.animationFrames = framesToRender;
         this.remainingAnimationFrames = framesToRender;
@@ -56,8 +57,9 @@ public abstract class AnimationHandler implements AutoCloseable {
         CompletableFuture.allOf(fileFutures.toArray(CompletableFuture[]::new))
                 .whenComplete((v_, throwable) -> {
                     GlobalProperties globalProperties = GlobalProperties.get();
-
                     globalProperties.overwriteLatest.set(overwriteValue);
+
+                    boolean keepingFiles = globalProperties.saveIndividualFrames.get();
                     if (throwable != null || closed) {
                         FileIO.deleteSequenceFilesFromPath(this.framesFolder);
                         return;
@@ -72,13 +74,18 @@ public abstract class AnimationHandler implements AutoCloseable {
                             globalProperties.animationFormat,
                             this,
                             ImageCropper.getFFmpegCropSize(renderable, collectedCropData)
-                    ).whenComplete((animationFile, animationThrowable) -> this.finishAndCleanup(animationFile));
+                    ).whenComplete((animationFile, animationThrowable) -> this.finishAndCleanup(animationFile, keepingFiles ? this.framesFolder : null));
                 });
     }
 
-    protected void finishAndCleanup(File animationFile) {
+    protected void finishAndCleanup(File animationFile, @Nullable Path framesFolderToLinkTo) {
         this.screen.exportAnimationButton.active = true;
         this.screen.exportAnimationButton.setMessage(Translate.gui("export_animation"));
+        if (this.screen.refreshCustomFFmpegPathButton != null) {
+            this.screen.refreshCustomFFmpegPathButton.active = true;
+            this.screen.refreshCustomFFmpegPathButton.setMessage(Translate.gui("check_ffmpeg_path"));
+        }
+
         this.screen.currentAnimationExportData = null;
         this.closed = true;
         this.collectedCropData.clear();
@@ -89,6 +96,14 @@ public abstract class AnimationHandler implements AutoCloseable {
                 Translate.gui("animation_saved"),
                 Component.literal(ExportPathSpec.exportRoot().relativize(animationFile.toPath()).toString())
         ));
+
+        if (framesFolderToLinkTo != null) {
+            Minecraft.getInstance().execute(() -> screen.notify(
+                    () -> Util.getPlatform().openFile(framesFolderToLinkTo.toFile()),
+                    Translate.gui("animation_frames_saved"),
+                    Component.literal(ExportPathSpec.exportRoot().relativize(framesFolderToLinkTo).toString())
+            ));
+        }
     }
 
     public boolean isFinished() {

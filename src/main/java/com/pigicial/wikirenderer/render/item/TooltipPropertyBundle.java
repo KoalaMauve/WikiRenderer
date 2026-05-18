@@ -1,7 +1,6 @@
 package com.pigicial.wikirenderer.render.item;
 
 import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.math.Axis;
 import com.pigicial.wikirenderer.property.*;
 import com.pigicial.wikirenderer.property.config.WikiRendererConfigs;
 import com.pigicial.wikirenderer.render.Renderable;
@@ -45,7 +44,7 @@ public class TooltipPropertyBundle extends DefaultCroppablePropertyBundle implem
             int tooltipSize = ((TooltipRenderable) renderable).getTooltipSize();
             int bufferSizeWithThisResolution = tooltipSize * resolution;
 
-            if ((resolution < 1 || bufferSizeWithThisResolution > RenderSystem.getDevice().getDeviceInfo().limits().maxTextureSize()) && !GlobalProperties.get().unsafe.get()) {
+            if ((resolution < 1 || bufferSizeWithThisResolution >= RenderSystem.getDevice().getDeviceInfo().limits().maxTextureSize()) && !GlobalProperties.get().unsafe.get()) {
                 screen.exportButton.active = false;
             } else {
                 this.fontScaling.set(resolution);

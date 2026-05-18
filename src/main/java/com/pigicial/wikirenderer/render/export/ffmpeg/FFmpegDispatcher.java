@@ -19,7 +19,11 @@ import java.util.concurrent.CompletableFuture;
 
 public class FFmpegDispatcher {
 
-    private static Boolean ffmpegDetected = null;
+    public static String resolvedFFmpegPath = null;
+    public static Boolean ffmpegDetected = null;
+    public static boolean tryCustomPathAgain = false;
+    public static CustomPathState customPathState = CustomPathState.NOT_CHECKED;
+    public static boolean activelyCheckingFfmpeg = false;
 
     public static boolean wasFFmpegDetected() {
         return ffmpegDetected != null;
@@ -30,40 +34,95 @@ public class FFmpegDispatcher {
     }
 
     public static CompletableFuture<Boolean> detectFFmpeg() {
-        if (ffmpegDetected != null) {
+        if (ffmpegDetected != null && !tryCustomPathAgain) {
             return CompletableFuture.completedFuture(ffmpegDetected);
         }
 
+        if (activelyCheckingFfmpeg) {
+            return CompletableFuture.completedFuture(ffmpegDetected != null && ffmpegDetected);
+        }
+
+        activelyCheckingFfmpeg = true;
         return CompletableFuture.supplyAsync(() -> {
+            String path = findFFmpegPath();
             try {
-                Process process = new ProcessBuilder("ffmpeg", "-version")
+                Process process = new ProcessBuilder(path, "-version")
                         .redirectError(ProcessBuilder.Redirect.DISCARD)
                         .start();
 
                 process.onExit().join();
                 String output = new String(process.getInputStream().readAllBytes());
 
-                WikiRenderer.LOGGER.info("FFmpeg detected, version: {}", output.split(" ")[2]);
+                if (customPathState == CustomPathState.CHECKING) {
+                    customPathState = CustomPathState.FOUND;
+                }
+
+                WikiRenderer.LOGGER.info("FFmpeg detected at {}, version: {}", path, output.split(" ")[2]);
+                resolvedFFmpegPath = path;
                 return true;
-            } catch (IOException exception) {
+            } catch (Exception exception) {
                 WikiRenderer.LOGGER.info("Did not detect FFmpeg for reason: {}", exception.getMessage());
+                if (customPathState == CustomPathState.CHECKING) {
+                    customPathState = CustomPathState.NOT_FOUND;
+                }
                 return false;
             }
         }, Util.backgroundExecutor()).whenComplete((result, throwable) -> {
-            if (throwable != null) {
-                ffmpegDetected = false;
-                WikiRenderer.LOGGER.warn("Could not complete FFmpeg detection", throwable);
-            } else {
-                ffmpegDetected = result;
-            }
+            ffmpegDetected = (throwable == null && result);
+            activelyCheckingFfmpeg = false;
         });
+    }
+
+    public static String findFFmpegPath() {
+        GlobalProperties globalProperties = GlobalProperties.get();
+        if (globalProperties.useCustomFFmpegPath.get()) {
+            customPathState = CustomPathState.CHECKING;
+            File file = new File(globalProperties.customFFmpegPath);
+            return file.getAbsolutePath();
+        }
+
+        customPathState = CustomPathState.NOT_CHECKED;
+        String os = System.getProperty("os.name").toLowerCase();
+        String binName = os.contains("win") ? "ffmpeg.exe" : "ffmpeg";
+
+        String cmd = os.contains("win") ? "where" : "which";
+        try {
+            Process p = new ProcessBuilder(cmd, "ffmpeg").start();
+            String foundPath = new String(p.getInputStream().readAllBytes()).trim();
+            if (!foundPath.isEmpty()) {
+                return foundPath.split("\n")[0].trim();
+            }
+        } catch (IOException ignored) {}
+
+        String[] commonDirectories = {
+                "/usr/local/bin/",
+                "/opt/homebrew/bin/",
+                "/usr/bin/",
+                "/bin/",
+                "C:\\ffmpeg\\bin\\",
+                "C:\\Program Files\\ffmpeg\\bin\\"
+        };
+
+        for (String directory : commonDirectories) {
+            File file = new File(directory, binName);
+            if (file.exists() && file.canExecute()) {
+                return file.getAbsolutePath();
+            }
+        }
+
+        return binName;
+    }
+
+    public static String getResolvedOrFallbackFFmpegPath() {
+        return resolvedFFmpegPath == null ? "ffmpeg" : resolvedFFmpegPath;
     }
 
     public static CompletableFuture<File> exportAnimation(ExportPathSpec target, Path sourcePath, Format format, AnimationHandler handler, @Nullable String cropFilter) {
         target.resolveOffset().toFile().mkdirs();
 
+        String ffmpegPath = FFmpegDispatcher.getResolvedOrFallbackFFmpegPath();
         List<String> args = new ArrayList<>(List.of(new String[]{
-                "ffmpeg",
+                ffmpegPath,
                 "-y",
                 "-threads",
                 String.valueOf(Math.max(1, Runtime.getRuntime().availableProcessors())),
@@ -143,7 +202,8 @@ public class FFmpegDispatcher {
         APNG("apng", new String[]{"-plays", "0", "-pix_fmt", "rgba"}),
 	    WEBP("webp", new String[]{"-plays", "0", "-loop", "0", "-pix_fmt", "rgba"}),
         GIF("gif", new String[]{"-plays", "0"}),
-        MP4("mp4", new String[]{"-preset", "slow", "-crf", "20", "-pix_fmt", "yuv420p"});
+        MP4("mp4", new String[]{"-preset", "slow", "-crf", "20", "-pix_fmt", "yuv420p"}),
+        MOV("mov", new String[]{"-c:v", "prores_ks", "-profile:v", "4444", "-q:v", "1", "-pix_fmt", "yuva444p10le"});
 
         public final String extension;
         public final String[] arguments;
@@ -155,7 +215,8 @@ public class FFmpegDispatcher {
 
         public Format next() {
             return switch (this) {
-                case MP4 -> APNG;
+                case MP4 -> MOV;
+                case MOV -> APNG;
                 case APNG -> WEBP;
 	            case WEBP -> GIF;
                 case GIF -> MP4;

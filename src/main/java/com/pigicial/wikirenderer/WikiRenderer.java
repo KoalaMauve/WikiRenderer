@@ -33,6 +33,8 @@ import org.joml.Matrix4fStack;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.List;
+
 @Environment(EnvType.CLIENT)
 public class WikiRenderer implements ClientModInitializer {
 
@@ -44,6 +46,7 @@ public class WikiRenderer implements ClientModInitializer {
     public static ParticleDisplayCondition particleDisplayCondition = ParticleDisplayCondition.SHOW_ALL;
     public static DrawType currentDrawType = null;
 
+    public static List<Integer> animationTimingDataRequestedToFill = null;
     public static MeshWorldOverrides currentWorldOverrides;
     public static boolean inAreaRenderDraw = false;
     public static boolean inEntityDraw = false;
@@ -90,8 +93,8 @@ public class WikiRenderer implements ClientModInitializer {
             }
 
             AreaSelectionComponent selectionHint = isometricHud.childById(AreaSelectionComponent.class, areaSelectionHintId);
-            if ((selectionHint == null) == AreaSelectionHelper.shouldDraw()) {
-                if (AreaSelectionHelper.shouldDraw()) {
+            if ((selectionHint == null) == AreaSelectionHelper.shouldDrawOverlay()) {
+                if (AreaSelectionHelper.shouldDrawOverlay()) {
                     isometricHud.child(new AreaSelectionComponent().id(areaSelectionHintId));
                 } else {
                     isometricHud.removeChild(selectionHint);

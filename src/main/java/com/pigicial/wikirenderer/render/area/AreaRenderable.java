@@ -34,7 +34,6 @@ import net.minecraft.client.model.HumanoidModel;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.GlobalSettingsUniform;
 import net.minecraft.client.renderer.SubmitNodeStorage;
-import net.minecraft.client.renderer.chunk.SectionRenderDispatcher;
 import net.minecraft.client.renderer.entity.EntityRenderDispatcher;
 import net.minecraft.client.renderer.entity.state.*;
 import net.minecraft.client.renderer.item.ItemStackRenderState;
@@ -78,6 +77,8 @@ public class AreaRenderable extends DefaultRenderable<AreaPropertyBundle> implem
     protected final EntityTypeSpecificPropertiesComponent advancedPropertiesComponent;
     public @Nullable Integer selectedEntityId;
     public @Nullable EntityTypeSpecificOverrides<?> renderStateOverrides = null;
+
+    private List<Integer> lastSeenEntityAnimationTimings = null;
 
     public AreaRenderable(WorldBlockMesh mesh) {
         this.mesh = mesh;
@@ -175,6 +176,8 @@ public class AreaRenderable extends DefaultRenderable<AreaPropertyBundle> implem
         standardStack.setIdentity();
         standardStack.translate(-xSize / 2f, -ySize / 2f, -zSize / 2f);
 
+        BlockPos minCorner = mesh.bounds.getMinCorner();
+
         // this could be better but whatever
         Runnable preTranslucencyTask = () -> {
             if (!properties.hideMesh.get()) {
@@ -182,7 +185,7 @@ public class AreaRenderable extends DefaultRenderable<AreaPropertyBundle> implem
             }
 
             if (client.player != null) {
-                Vec3 diff = Vec3.atLowerCornerOf(mesh.bounds.getMinCorner()).subtract(client.player.trackingPosition());
+                Vec3 diff = Vec3.atLowerCornerOf(minCorner).subtract(client.player.trackingPosition());
                 standardStack.pushPose();
                 standardStack.translate(-diff.x, -diff.y + 1.65, -diff.z);
                 this.drawParticles(standardStack.last().pose(), tickDelta);
@@ -199,6 +202,7 @@ public class AreaRenderable extends DefaultRenderable<AreaPropertyBundle> implem
             PoseStack meshStack = new PoseStack();
             meshStack.mulPose(modelViewStack);
             meshStack.translate(-xSize / 2f, -ySize / 2f, -zSize / 2f);
+            meshStack.translate(-minCorner.getX(), -minCorner.getY(),- minCorner.getZ());
 
             this.mesh.drawBlocks(meshStack, preTranslucencyTask);
         } else {
@@ -273,6 +277,8 @@ public class AreaRenderable extends DefaultRenderable<AreaPropertyBundle> implem
 
         WikiRenderer.currentWorldOverrides = mesh.world;
 
+        List<Integer> animationTimingsToFill = new ArrayList<>();
+
         this.refreshEntities();
         this.entities.forEach(entity -> {
             if (properties.hiddenEntityTypes.contains(entity.getType())) return;
@@ -294,10 +300,15 @@ public class AreaRenderable extends DefaultRenderable<AreaPropertyBundle> implem
             clonedPose.mulPose(standardStack.last().pose());
             drawnVertexBoundCache.put(entityId, new DrawEntityDataCache(state, offsetFromMesh, clonedPose, false));
 
+            WikiRenderer.animationTimingDataRequestedToFill = animationTimingsToFill;
             entityDispatcher.submit(state, cameraRenderState, offsetFromMesh.x, offsetFromMesh.y, offsetFromMesh.z, standardStack, nodeStorage);
+            WikiRenderer.animationTimingDataRequestedToFill = null;
+
         });
         super.drawSubmittedRenderFeatures();
 
+        this.lastSeenEntityAnimationTimings = animationTimingsToFill;
+        WikiRenderer.animationTimingDataRequestedToFill = null;
         WikiRenderer.currentWorldOverrides = null;
     }
 
@@ -440,8 +451,7 @@ public class AreaRenderable extends DefaultRenderable<AreaPropertyBundle> implem
     @Override
     public void dispose() {
         super.dispose();
-        mesh.builtSubMeshes.forEach(SectionRenderDispatcher.RenderSection::reset);
-        mesh.builtSubMeshes.clear();
+        mesh.dispose();
     }
 
     @Override
@@ -451,18 +461,10 @@ public class AreaRenderable extends DefaultRenderable<AreaPropertyBundle> implem
             animationTimings.add(mesh.getAnimationCompletionTimings().get());
         }
 
-        AreaPropertyBundle properties = getProperties();
-        if (!properties.hideEntities.get()) {
-            List<Integer> entityAnimationTimings = new LinkedList<>();
-            for (Entity entity : entities) {
-                if (properties.hiddenEntityTypes.contains(entity.getType())) continue;
-                if (entity instanceof LivingEntity && properties.hideLivingEntities.get()) continue;
-                AnimationTimingUtil.scanTicksToFullyAnimateEntityItems(entity, entityAnimationTimings);
-            }
-            if (!entityAnimationTimings.isEmpty()) {
-                animationTimings.add(entityAnimationTimings);
-            }
+        if (lastSeenEntityAnimationTimings != null && !lastSeenEntityAnimationTimings.isEmpty()) {
+            animationTimings.add(lastSeenEntityAnimationTimings);
         }
+
         return animationTimings;
     }
 

@@ -1,5 +1,6 @@
 package com.pigicial.wikirenderer.render.area;
 
+import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.math.Axis;
 import com.pigicial.wikirenderer.components.AutoResizingLabelComponent;
 import com.pigicial.wikirenderer.components.ConditionalButton;
@@ -66,6 +67,7 @@ public class AreaPropertyBundle extends DefaultCroppablePropertyBundle implement
     public final Property<Boolean> includeCornersWhenIncludingWalls = Property.of(false);
     public final Property<Boolean> showMeshExpansionControls = Property.of(false);
 
+    public final Property<Boolean> freezeBlocks = Property.of(false);
     public final Property<Boolean> hideMesh = Property.of(false);
     public final Property<Boolean> hideFluids = Property.of(false);
     public final Property<Boolean> hideBeaconBeams = Property.of(false);
@@ -236,26 +238,26 @@ public class AreaPropertyBundle extends DefaultCroppablePropertyBundle implement
                         try (WikiRendererUI.RowBuilder rowBuilder = WikiRendererUI.rowBuilder(container)) {
                             rowBuilder.row.child(new ConditionalButton(Translate.gui("minus_five"), _ -> {
                                 if (renderable.mesh.canRebuild()) {
-                                    expandableMeshBounds.move(expansionSide, sideViewRotation, -5);
-                                    renderable.mesh.scheduleRebuild(true);
+                                    expandableMeshBounds.move(renderable.mesh, expansionSide, sideViewRotation, -5);
+                                    //renderable.mesh.scheduleRebuild(true);
                                 }
                             }, renderable.mesh::canRebuild));
                             rowBuilder.row.child(new ConditionalButton(Translate.gui("minus_one"), _ -> {
                                 if (renderable.mesh.canRebuild()) {
-                                    expandableMeshBounds.move(expansionSide, sideViewRotation, -1);
-                                    renderable.mesh.scheduleRebuild(true);
+                                    expandableMeshBounds.move(renderable.mesh, expansionSide, sideViewRotation, -1);
+                                    //renderable.mesh.scheduleRebuild(true);
                                 }
                             }, renderable.mesh::canRebuild));
                             rowBuilder.row.child(new ConditionalButton(Translate.gui("plus_one"), _ -> {
                                 if (renderable.mesh.canRebuild()) {
-                                    expandableMeshBounds.move(expansionSide, sideViewRotation, 1);
-                                    renderable.mesh.scheduleRebuild(true);
+                                    expandableMeshBounds.move(renderable.mesh, expansionSide, sideViewRotation, 1);
+                                    //renderable.mesh.scheduleRebuild(true);
                                 }
                             }, renderable.mesh::canRebuild));
                             rowBuilder.row.child(new ConditionalButton(Translate.gui("plus_five"), _ -> {
                                 if (renderable.mesh.canRebuild()) {
-                                    expandableMeshBounds.move(expansionSide, sideViewRotation, 5);
-                                    renderable.mesh.scheduleRebuild(true);
+                                    expandableMeshBounds.move(renderable.mesh, expansionSide, sideViewRotation, 5);
+                                    //renderable.mesh.scheduleRebuild(true);
                                 }
                             }, renderable.mesh::canRebuild));
 
@@ -303,10 +305,7 @@ public class AreaPropertyBundle extends DefaultCroppablePropertyBundle implement
         container.child(UIComponents.button(Translate.gui("copy_render_command"), _ -> {
             screen.notify(Translate.gui("copied_coordinates_command_to_clipboard"));
 
-            BlockPos minCorner = mesh.bounds.getMinCorner();
-            BlockPos maxCorner = mesh.bounds.getMaxCorner();
-            String command = "/wikirender area pos " + minCorner.getX() + " " + minCorner.getY() + " " + minCorner.getZ() + " " + maxCorner.getX() + " " + maxCorner.getY() + " " + maxCorner.getZ();
-
+            String command = mesh.bounds.generateAreaCommand();
             Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new StringSelection(command), (_, _) -> {});
         }));
 
@@ -317,8 +316,9 @@ public class AreaPropertyBundle extends DefaultCroppablePropertyBundle implement
         if (!this.hideMesh.get()) {
             WikiRendererUI.booleanControl(container, this.hideFluids, "hide_fluids");
             this.hideFluids.futureListen(screen, (_, _) -> mesh.scheduleRebuild(true));
+            WikiRendererUI.booleanControl(container, this.hideBeaconBeams, "hide_beacon_beams");
+            WikiRendererUI.booleanControl(container, this.freezeBlocks, "freeze_blocks");
         }
-        WikiRendererUI.booleanControl(container, this.hideBeaconBeams, "hide_beacon_beams");
 
         WikiRendererUI.text(container, "entity_visibility_overrides", 10);
         WikiRendererUI.booleanControl(container, this.hideEntities, "hide_entities");
@@ -481,7 +481,7 @@ public class AreaPropertyBundle extends DefaultCroppablePropertyBundle implement
 
                 double bufferSize = highest * pixelsPerBlock;
 
-                if ((pixelsPerBlock < 1 || pixelsPerBlock > 256 || bufferSize > 16384) && !GlobalProperties.get().unsafe.get()) {
+                if ((pixelsPerBlock < 1 || pixelsPerBlock > 256 || bufferSize >= RenderSystem.getDevice().getMaxTextureSize()) && !GlobalProperties.get().unsafe.get()) {
                     screen.exportButton.active = false;
                 } else {
                     if ((this.getPixelsPerBlockResolution() != 4 && pixelsPerBlock == 4) || (pixelsPerBlock != 4 && this.getPixelsPerBlockResolution() == 4)) {
