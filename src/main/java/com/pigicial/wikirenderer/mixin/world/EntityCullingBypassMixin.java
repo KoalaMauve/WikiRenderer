@@ -23,7 +23,7 @@ public class EntityCullingBypassMixin {
     // fixes the entity culling mod causing out-of-view entities to not tick, which breaks how entities can look in area renders
     @Inject(method = "tickNonPassenger", at = @At("HEAD"))
     public void wikirenderer$forceTickDuringGui(Entity entity, CallbackInfo ci) {
-        if (Minecraft.getInstance().screen instanceof RenderScreen && EntityCullingCheck.isUsingEntityCulling()) {
+        if (Minecraft.getInstance().gui.screen() instanceof RenderScreen && EntityCullingCheck.isUsingEntityCulling()) {
             savedTickCulling = EntityCullingModBase.instance.config.tickCulling;
             EntityCullingModBase.instance.config.tickCulling = false;
         }

@@ -82,7 +82,7 @@ public interface PropertyBundle {
             if (s.isBlank()) return;
             int resolution = Integer.parseInt(s);
 
-            if ((resolution < 16 || resolution >= RenderSystem.getDevice().getMaxTextureSize()) && !globalProperties.unsafe.get()) {
+            if ((resolution < 16 || resolution >= RenderSystem.getDevice().getDeviceInfo().limits().maxTextureSize()) && !globalProperties.unsafe.get()) {
                 screen.exportButton.active = false;
             } else {
                 renderable.getProperties().setExportResolution(renderable, resolution);

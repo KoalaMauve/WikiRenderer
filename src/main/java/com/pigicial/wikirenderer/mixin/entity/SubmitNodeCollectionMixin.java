@@ -5,8 +5,8 @@ import com.pigicial.wikirenderer.WikiRenderer;
 import com.pigicial.wikirenderer.util.AnimationTimingUtil;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.Model;
-import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.renderer.SubmitNodeCollection;
+import net.minecraft.client.renderer.block.dispatch.BlockStateModelPart;
 import net.minecraft.client.renderer.entity.state.EntityRenderState;
 import net.minecraft.client.renderer.feature.ModelFeatureRenderer;
 import net.minecraft.client.renderer.item.ItemStackRenderState;
@@ -35,10 +35,10 @@ public class SubmitNodeCollectionMixin {
         }
     }
 
-    @Inject(method = "submitModelPart", at = @At(value = "HEAD"))
-    public void wikirenderer$onSubmitModelPart(ModelPart modelPart, PoseStack poseStack, RenderType renderType, int lightCoords, int overlayCoords, TextureAtlasSprite sprite, boolean sheeted, boolean hasFoil, int tintedColor, ModelFeatureRenderer.CrumblingOverlay crumblingOverlay, int outlineColor, CallbackInfo ci) {
-        if (WikiRenderer.animationTimingDataRequestedToFill != null && sprite != null) {
-            AnimationTimingUtil.fillTimings(sprite, WikiRenderer.animationTimingDataRequestedToFill);
+    @Inject(method = "submitBlockModel", at = @At(value = "HEAD"))
+    public void wikirenderer$onSubmitBlockModel(PoseStack poseStack, RenderType renderType, List<BlockStateModelPart> modelParts, int[] tintLayers, int lightCoords, int overlayCoords, int outlineColor, CallbackInfo ci) {
+        if (WikiRenderer.animationTimingDataRequestedToFill != null && modelParts != null) {
+            AnimationTimingUtil.fillBlockTimings(modelParts, WikiRenderer.animationTimingDataRequestedToFill);
         }
     }
 

@@ -72,6 +72,12 @@ public class AnimationTimingUtil {
         }
     }
 
+    public static void fillBlockTimings(Collection<BlockStateModelPart> modelParts, List<Integer> animationCompletionTimes) {
+        for (BlockStateModelPart modelPart : modelParts) {
+            fillTimings(modelPart.particleMaterial().sprite(), animationCompletionTimes);
+        }
+    }
+
     public static void fillTimings(TextureAtlasSprite sprite, List<Integer> animationCompletionTimes) {
         SpriteContents.AnimatedTexture animatedTexture = ((SpriteContentsAccessor) sprite.contents()).wikirender$getAnimatedTexture();
         if (animatedTexture != null) {

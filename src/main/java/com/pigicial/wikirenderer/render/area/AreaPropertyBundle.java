@@ -481,7 +481,7 @@ public class AreaPropertyBundle extends DefaultCroppablePropertyBundle implement
 
                 double bufferSize = highest * pixelsPerBlock;
 
-                if ((pixelsPerBlock < 1 || pixelsPerBlock > 256 || bufferSize >= RenderSystem.getDevice().getMaxTextureSize()) && !GlobalProperties.get().unsafe.get()) {
+                if ((pixelsPerBlock < 1 || pixelsPerBlock > 256 || bufferSize >= RenderSystem.getDevice().getDeviceInfo().limits().maxTextureSize()) && !GlobalProperties.get().unsafe.get()) {
                     screen.exportButton.active = false;
                 } else {
                     if ((this.getPixelsPerBlockResolution() != 4 && pixelsPerBlock == 4) || (pixelsPerBlock != 4 && this.getPixelsPerBlockResolution() == 4)) {

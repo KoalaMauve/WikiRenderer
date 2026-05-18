@@ -82,7 +82,7 @@ public interface CroppablePropertyBundle extends PropertyBundle {
             if (s.isBlank()) return;
             int resolution = Integer.parseInt(s);
 
-            if ((resolution < 16 || resolution >= RenderSystem.getDevice().getMaxTextureSize()) && !GlobalProperties.get().unsafe.get()) {
+            if ((resolution < 16 || resolution >= RenderSystem.getDevice().getDeviceInfo().limits().maxTextureSize()) && !GlobalProperties.get().unsafe.get()) {
                 screen.exportButton.active = false;
             } else {
                 renderable.getProperties().setExportResolution(renderable, resolution);
