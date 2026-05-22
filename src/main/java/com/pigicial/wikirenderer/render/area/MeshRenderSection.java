@@ -38,6 +38,7 @@ public class MeshRenderSection extends SectionRenderDispatcher.RenderSection {
 
     protected Map<BlockPos, BlockEntity> blockEntities = new ConcurrentHashMap<>();
     protected List<Integer> animationCompletionTimings = new LinkedList<>();
+    protected volatile boolean isDirty = false;
     protected volatile boolean isBuilding = false;
     protected volatile boolean forceUpdate = false;
 
@@ -192,17 +193,19 @@ public class MeshRenderSection extends SectionRenderDispatcher.RenderSection {
         BlockModelLighter.clearCache();
     }
 
-    @Override
     public void setNotDirty() {
-        super.setNotDirty();
+        isDirty = false;
         isBuilding = false;
         forceUpdate = false;
     }
 
-    @Override
     public void setDirty(boolean force) {
-        super.setDirty(true);
+        isDirty = true;
         forceUpdate = force;
+    }
+
+    public boolean isDirty() {
+        return isDirty;
     }
 
     public boolean isForceUpdate() {

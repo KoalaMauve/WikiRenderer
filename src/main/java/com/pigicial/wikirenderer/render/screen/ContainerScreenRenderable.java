@@ -14,7 +14,6 @@ import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.render.GuiRenderer;
 import net.minecraft.client.gui.render.pip.*;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
-import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.state.WindowRenderState;
 import net.minecraft.client.renderer.state.gui.GuiRenderState;
 import net.minecraft.client.resources.model.sprite.AtlasManager;
@@ -104,7 +103,7 @@ public class ContainerScreenRenderable extends DefaultRenderable<ContainerScreen
         int savedWidth = window.getWidth();
         int savedHeight = window.getHeight();
         int savedWindowScale = window.getGuiScale();
-        WindowRenderState windowRenderState = Minecraft.getInstance().gameRenderer.getGameRenderState().windowRenderState;
+        WindowRenderState windowRenderState = Minecraft.getInstance().gameRenderer.gameRenderState().windowRenderState;
         int savedRenderStateGuiScale = windowRenderState.guiScale;
 
         double normalizedMouseX = Minecraft.getInstance().mouseHandler.xpos();
@@ -130,7 +129,7 @@ public class ContainerScreenRenderable extends DefaultRenderable<ContainerScreen
 
         GuiGraphicsExtractor guiGraphics = new GuiGraphicsExtractor(client, state, mouseX, mouseY);
 
-        client.gameRenderer.getLighting().setupFor(Lighting.Entry.ITEMS_3D);
+        client.gameRenderer.lighting().setupFor(Lighting.Entry.ITEMS_3D);
 
         containerScreen.init(guiScaledWidth, guiScaledHeight);
         containerScreen.resize(guiScaledWidth, guiScaledHeight);
@@ -152,18 +151,16 @@ public class ContainerScreenRenderable extends DefaultRenderable<ContainerScreen
 
     private GuiRenderer getGuiRenderer(Minecraft client) {
         AtlasManager atlasManager = client.getAtlasManager();
-        MultiBufferSource.BufferSource bufferSource = client.renderBuffers().bufferSource();
 
         List<PictureInPictureRenderer<?>> renderers = List.of(
                 new GuiEntityRenderer(client.getEntityRenderDispatcher()),
                 new GuiSkinRenderer(),
                 new GuiBookModelRenderer(),
                 new GuiBannerResultRenderer(atlasManager),
-                new GuiSignRenderer(atlasManager),
                 new GuiProfilerChartRenderer()
         );
 
-        return new GuiRenderer(ContainerScreenRenderable.state, bufferSource, client.gameRenderer.getSubmitNodeStorage(), client.gameRenderer.getFeatureRenderDispatcher(), renderers);
+        return new GuiRenderer(state, client.gameRenderer.featureRenderDispatcher(), renderers);
     }
 
     @Override

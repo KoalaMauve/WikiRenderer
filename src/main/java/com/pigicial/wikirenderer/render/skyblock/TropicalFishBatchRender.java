@@ -6,7 +6,7 @@ import com.pigicial.wikirenderer.screen.RenderScreen;
 import com.pigicial.wikirenderer.screen.ScreenSchedulerAndSaver;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.IntTag;
-import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.EntityTypes;
 import net.minecraft.world.entity.animal.fish.TropicalFish;
 import net.minecraft.world.item.DyeColor;
 
@@ -23,7 +23,7 @@ public class TropicalFishBatchRender {
                 for (TropicalFish.Pattern variant : TropicalFish.Pattern.values()) {
                     CompoundTag tag = new CompoundTag();
                     tag.put("Variant", IntTag.valueOf(new TropicalFish.Variant(variant, baseColor, patternColor).getPackedId()));
-                    EntityRenderable fishy = EntityRenderable.fromEntityType(EntityType.TROPICAL_FISH, tag);
+                    EntityRenderable fishy = EntityRenderable.fromEntityType(EntityTypes.TROPICAL_FISH, tag);
                     if (fishy != null) {
                         fishy.getUsedEntity().tick();
                         fishy.setCustomFileName("tropical_fish_" + variant.getSerializedName() + "_" + baseColor.getName() + "_" + patternColor.getName());

@@ -6,6 +6,7 @@ import com.mojang.blaze3d.buffers.Std140SizeCalculator;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.pigicial.wikirenderer.mixin.access.CameraInvoker;
 import com.pigicial.wikirenderer.mixin.access.GameRendererAccessor;
+import com.pigicial.wikirenderer.mixin.access.LevelRendererAccessor;
 import com.pigicial.wikirenderer.mixin.access.LightmapRenderStateExtractorAccessor;
 import com.pigicial.wikirenderer.property.DefaultPropertyBundle;
 import com.pigicial.wikirenderer.property.GlobalProperties;
@@ -13,6 +14,7 @@ import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.Lightmap;
 import net.minecraft.client.renderer.LightmapRenderStateExtractor;
+import net.minecraft.client.renderer.SubmitNodeStorage;
 import net.minecraft.client.renderer.culling.Frustum;
 import net.minecraft.client.renderer.state.LightmapRenderState;
 import net.minecraft.client.renderer.state.level.CameraRenderState;
@@ -110,7 +112,8 @@ public abstract class DefaultRenderable<P extends DefaultPropertyBundle> impleme
     @Override
     public void drawSubmittedRenderFeatures() {
         // Draw all buffers
-        Minecraft.getInstance().gameRenderer.getFeatureRenderDispatcher().renderAllFeatures();
+        SubmitNodeStorage submitNodeStorage = ((LevelRendererAccessor) Minecraft.getInstance().levelRenderer).wikirenderer$getSubmitNodeStorage();
+        Minecraft.getInstance().gameRenderer.featureRenderDispatcher().renderAllFeatures(submitNodeStorage);
         //Minecraft.getInstance().renderBuffers().bufferSource().endBatch();
     }
 
@@ -160,7 +163,7 @@ public abstract class DefaultRenderable<P extends DefaultPropertyBundle> impleme
         cameraRenderState.pos = camera.entity().getPosition(tickDelta);
 
         /* submit and render to vertexconsumers */
-        particleBatch.submit(client.gameRenderer.getSubmitNodeStorage(), cameraRenderState);
+        particleBatch.submit(((LevelRendererAccessor) client.levelRenderer).wikirenderer$getSubmitNodeStorage(), cameraRenderState);
         this.drawSubmittedRenderFeatures();
         particleBatch.reset();
 

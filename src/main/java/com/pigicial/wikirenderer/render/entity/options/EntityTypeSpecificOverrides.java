@@ -1,7 +1,7 @@
 package com.pigicial.wikirenderer.render.entity.options;
 
+import com.pigicial.wikirenderer.mixin.access.BlockEntityRenderDispatcherAccessor;
 import com.pigicial.wikirenderer.mixin.access.LivingEntityRendererAccessor;
-import com.pigicial.wikirenderer.mixin.access.MinecraftAccessor;
 import com.pigicial.wikirenderer.mixin.access.ModelPartAccessor;
 import com.pigicial.wikirenderer.render.entity.options.types.*;
 import net.minecraft.client.Minecraft;
@@ -308,7 +308,7 @@ public class EntityTypeSpecificOverrides<S extends EntityRenderState> {
             overrides.registerBooleanOverride("isCreepy", s -> s.isCreepy, (s, value) -> s.isCreepy = value);
             overrides.registerBlockStateOverride("carriedBlock", _ -> null, (s, value) -> {
                 if (value != null) {
-                    BlockModelResolver blockModelResolver = ((MinecraftAccessor) Minecraft.getInstance()).wikirenderer$getBlockModelResolver();
+                    BlockModelResolver blockModelResolver = ((BlockEntityRenderDispatcherAccessor) Minecraft.getInstance().getBlockEntityRenderDispatcher()).wikirenderer$getBlockModelResolver();
                     blockModelResolver.update(s.carriedBlock, value, EndermanRenderer.BLOCK_DISPLAY_CONTEXT);
                 }
             });
@@ -637,7 +637,7 @@ public class EntityTypeSpecificOverrides<S extends EntityRenderState> {
             overrides.registerIntOverride("displayOffset", s -> s.displayOffset, (s, value) -> s.displayOffset = value);
             overrides.registerBlockStateOverride("displayedBlockState", _ -> null, (s, value) -> {
                 if (value != null) {
-                    BlockModelResolver blockModelResolver = ((MinecraftAccessor) Minecraft.getInstance()).wikirenderer$getBlockModelResolver();
+                    BlockModelResolver blockModelResolver = ((BlockEntityRenderDispatcherAccessor) Minecraft.getInstance().getBlockEntityRenderDispatcher()).wikirenderer$getBlockModelResolver();
                     blockModelResolver.update(s.displayBlockModel, value, AbstractMinecartRenderer.BLOCK_DISPLAY_CONTEXT);
                 }
             });
@@ -815,7 +815,7 @@ public class EntityTypeSpecificOverrides<S extends EntityRenderState> {
         registerOverrides(SnowGolemRenderState.class, overrides ->
                 overrides.registerBlockStateOverride("headBlock", _ -> null, (s, value) -> {
                     if (value != null) {
-                        BlockModelResolver blockModelResolver = ((MinecraftAccessor) Minecraft.getInstance()).wikirenderer$getBlockModelResolver();
+                        BlockModelResolver blockModelResolver = ((BlockEntityRenderDispatcherAccessor) Minecraft.getInstance().getBlockEntityRenderDispatcher()).wikirenderer$getBlockModelResolver();
                         blockModelResolver.update(s.headBlock, value, SnowGolemRenderer.BLOCK_DISPLAY_CONTEXT);
                     }
                 }));
@@ -866,7 +866,7 @@ public class EntityTypeSpecificOverrides<S extends EntityRenderState> {
             overrides.registerFloatOverride("fuseRemainingInTicks", s -> s.fuseRemainingInTicks, (s, value) -> s.fuseRemainingInTicks = value);
             overrides.registerBlockStateOverride("blockState", _ -> null, (s, value) -> {
                 if (value != null) {
-                    BlockModelResolver blockModelResolver = ((MinecraftAccessor) Minecraft.getInstance()).wikirenderer$getBlockModelResolver();
+                    BlockModelResolver blockModelResolver = ((BlockEntityRenderDispatcherAccessor) Minecraft.getInstance().getBlockEntityRenderDispatcher()).wikirenderer$getBlockModelResolver();
                     blockModelResolver.update(s.blockState, value, TntMinecartRenderer.BLOCK_DISPLAY_CONTEXT);
                 }
             });

@@ -7,13 +7,12 @@ import com.pigicial.wikirenderer.util.CornerData;
 import com.pigicial.wikirenderer.util.DrawEntityDataCache;
 import com.pigicial.wikirenderer.util.DrawProjectionDataCache;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.SubmitNodeCollection;
 import net.minecraft.client.renderer.SubmitNodeStorage;
 import net.minecraft.client.renderer.entity.EntityRenderDispatcher;
 import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.LivingEntityRenderer;
 import net.minecraft.client.renderer.entity.state.EntityRenderState;
-import net.minecraft.client.renderer.feature.*;
+import net.minecraft.client.renderer.feature.FeatureRenderDispatcher;
 import net.minecraft.client.renderer.state.level.CameraRenderState;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.AABB;
@@ -25,18 +24,7 @@ import java.util.List;
 
 public class EntityRenderBoundsUtil {
 
-    private static final EntityVertexPositionTracker.BufferSource BUFFER_SOURCE = new EntityVertexPositionTracker.BufferSource();
-    private static final EntityVertexPositionTracker.OutlineBufferSource OUTLINE_BUFFER_SOURCE = new EntityVertexPositionTracker.OutlineBufferSource();
-
-    private static final ModelFeatureRenderer MODEL_FEATURE_RENDERER = new ModelFeatureRenderer();
-    private static final ModelFeatureRenderer MODEL_PART_FEATURE_RENDERER = new ModelFeatureRenderer();
-    private static final FlameFeatureRenderer FLAME_FEATURE_RENDERER = new FlameFeatureRenderer();
-    private static final NameTagFeatureRenderer NAME_TAG_FEATURE_RENDERER = new NameTagFeatureRenderer();
-    private static final TextFeatureRenderer TEXT_FEATURE_RENDERER = new TextFeatureRenderer();
-    private static final LeashFeatureRenderer LEASH_FEATURE_RENDERER = new LeashFeatureRenderer();
-    private static final ItemFeatureRenderer ITEM_FEATURE_RENDERER = new ItemFeatureRenderer();
-    private static final BlockFeatureRenderer BLOCK_FEATURE_RENDERER = new BlockFeatureRenderer();
-    private static final CustomFeatureRenderer CUSTOM_FEATURE_RENDERER = new CustomFeatureRenderer();
+    public static EntityVertexPositionTracker currentBufferSource = new EntityVertexPositionTracker();
 
     @Nullable
     public static EntityVertexBounds getPositionOffsetBasedBounds(Entity entity) {
@@ -100,20 +88,11 @@ public class EntityRenderBoundsUtil {
 
     private static EntityVertexBounds submitVertexData(SubmitNodeStorage tempStorage) {
         EntityVertexPositionTracker.BOUNDS = null;
-        for (SubmitNodeCollection collection : tempStorage.getSubmitsPerOrder().values()) {
-            renderSolids(collection);
+        EntityRenderBoundsUtil.currentBufferSource = new EntityVertexPositionTracker();
 
-            MODEL_FEATURE_RENDERER.renderTranslucent(collection, BUFFER_SOURCE, OUTLINE_BUFFER_SOURCE, BUFFER_SOURCE);
-            MODEL_PART_FEATURE_RENDERER.renderTranslucent(collection, BUFFER_SOURCE, OUTLINE_BUFFER_SOURCE, BUFFER_SOURCE);
-            EntityVertexPositionTracker.renderingText = true;
-            NAME_TAG_FEATURE_RENDERER.renderTranslucent(collection, BUFFER_SOURCE, Minecraft.getInstance().font);
-            TEXT_FEATURE_RENDERER.renderTranslucent(collection, BUFFER_SOURCE);
-            EntityVertexPositionTracker.renderingText = false;
-            ITEM_FEATURE_RENDERER.renderTranslucent(collection, BUFFER_SOURCE, OUTLINE_BUFFER_SOURCE);
-            BLOCK_FEATURE_RENDERER.renderTranslucent(collection, BUFFER_SOURCE, Minecraft.getInstance().getModelManager().getBlockStateModelSet(), OUTLINE_BUFFER_SOURCE, BUFFER_SOURCE, Minecraft.getInstance().gameRenderer.getGameRenderState().optionsRenderState);
-            CUSTOM_FEATURE_RENDERER.renderTranslucent(collection, BUFFER_SOURCE);
+        FeatureRenderDispatcher featureRenderDispatcher = Minecraft.getInstance().gameRenderer.featureRenderDispatcher();
+        featureRenderDispatcher.prepareFrame(tempStorage);
 
-        }
         return EntityVertexPositionTracker.BOUNDS;
     }
 
@@ -125,35 +104,29 @@ public class EntityRenderBoundsUtil {
         Minecraft.getInstance().getEntityRenderDispatcher().submit(entityRenderState, cameraRenderState, 0, 0, 0, new PoseStack(), tempStorage);
 
         EntityVertexPositionTracker.BOUNDS = null;
+        // todo: replace this
+        /*
         for (SubmitNodeCollection collection : tempStorage.getSubmitsPerOrder().values()) {
             renderSolids(collection);
 
-            MODEL_FEATURE_RENDERER.renderTranslucent(collection, BUFFER_SOURCE, OUTLINE_BUFFER_SOURCE, BUFFER_SOURCE);
-            MODEL_PART_FEATURE_RENDERER.renderTranslucent(collection, BUFFER_SOURCE, OUTLINE_BUFFER_SOURCE, BUFFER_SOURCE);
-            TEXT_FEATURE_RENDERER.renderTranslucent(collection, BUFFER_SOURCE);
-            ITEM_FEATURE_RENDERER.renderTranslucent(collection, BUFFER_SOURCE, OUTLINE_BUFFER_SOURCE);
-            BLOCK_FEATURE_RENDERER.renderTranslucent(collection, BUFFER_SOURCE, Minecraft.getInstance().getModelManager().getBlockStateModelSet(), OUTLINE_BUFFER_SOURCE, BUFFER_SOURCE, Minecraft.getInstance().gameRenderer.getGameRenderState().optionsRenderState);
-            CUSTOM_FEATURE_RENDERER.renderTranslucent(collection, BUFFER_SOURCE);
+            MODEL_FEATURE_RENDERER.renderTranslucent(collection, currentBufferSource, OUTLINE_BUFFER_SOURCE, currentBufferSource);
+            MODEL_PART_FEATURE_RENDERER.renderTranslucent(collection, currentBufferSource, OUTLINE_BUFFER_SOURCE, currentBufferSource);
+            TEXT_FEATURE_RENDERER.renderTranslucent(collection, currentBufferSource);
+            ITEM_FEATURE_RENDERER.renderTranslucent(collection, currentBufferSource, OUTLINE_BUFFER_SOURCE);
+            BLOCK_FEATURE_RENDERER.renderTranslucent(collection, currentBufferSource, Minecraft.getInstance().getModelManager().getBlockStateModelSet(), OUTLINE_BUFFER_SOURCE, currentBufferSource, Minecraft.getInstance().gameRenderer.getGameRenderState().optionsRenderState);
+            CUSTOM_FEATURE_RENDERER.renderTranslucent(collection, currentBufferSource);
         }
 
         if (EntityVertexPositionTracker.BOUNDS == null) {
             for (SubmitNodeCollection collection : tempStorage.getSubmitsPerOrder().values()) {
-                NAME_TAG_FEATURE_RENDERER.renderTranslucent(collection, BUFFER_SOURCE, Minecraft.getInstance().font);
+                NAME_TAG_FEATURE_RENDERER.renderTranslucent(collection, currentBufferSource, Minecraft.getInstance().font);
             }
 
             return EntityVertexPositionTracker.BOUNDS != null;
         }
 
-        return false;
-    }
+         */
 
-    private static void renderSolids(SubmitNodeCollection collection) {
-        MODEL_FEATURE_RENDERER.renderSolid(collection, BUFFER_SOURCE, OUTLINE_BUFFER_SOURCE, BUFFER_SOURCE);
-        MODEL_PART_FEATURE_RENDERER.renderSolid(collection, BUFFER_SOURCE, OUTLINE_BUFFER_SOURCE, BUFFER_SOURCE);
-        FLAME_FEATURE_RENDERER.renderSolid(collection, BUFFER_SOURCE, Minecraft.getInstance().getAtlasManager());
-        LEASH_FEATURE_RENDERER.renderSolid(collection, BUFFER_SOURCE);
-        ITEM_FEATURE_RENDERER.renderSolid(collection, BUFFER_SOURCE, OUTLINE_BUFFER_SOURCE);
-        BLOCK_FEATURE_RENDERER.renderSolid(collection, BUFFER_SOURCE, Minecraft.getInstance().getModelManager().getBlockStateModelSet(), OUTLINE_BUFFER_SOURCE, Minecraft.getInstance().gameRenderer.getGameRenderState().optionsRenderState);
-        CUSTOM_FEATURE_RENDERER.renderSolid(collection, BUFFER_SOURCE);
+        return false;
     }
 }

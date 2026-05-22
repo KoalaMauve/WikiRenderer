@@ -2,6 +2,7 @@ package com.pigicial.wikirenderer.render.area;
 
 import com.pigicial.wikirenderer.render.area.bounds.MeshBounds;
 import com.pigicial.wikirenderer.render.area.side_view.WalkabilityFilter;
+import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.block.BlockAndTintGetter;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.CardinalLighting;
@@ -18,13 +19,17 @@ import org.jspecify.annotations.NonNull;
 
 public class MeshWorldOverrides implements BlockAndTintGetter {
 
-    private final BlockAndTintGetter delegate;
+    private final ClientLevel delegate;
     private final MeshBounds bounds;
     private WalkabilityFilter filter = null;
 
-    public MeshWorldOverrides(BlockAndTintGetter delegate, MeshBounds bounds) {
+    public MeshWorldOverrides(ClientLevel delegate, MeshBounds bounds) {
         this.delegate = delegate;
         this.bounds = bounds;
+    }
+
+    public ClientLevel getDelegate() {
+        return delegate;
     }
 
     @Override

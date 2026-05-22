@@ -1,14 +1,9 @@
 package com.pigicial.wikirenderer.render.entity;
 
 import com.mojang.blaze3d.vertex.VertexConsumer;
-import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.rendertype.RenderType;
 import org.joml.Matrix4f;
 import org.joml.Vector4f;
 import org.jspecify.annotations.NonNull;
-
-import java.util.HashMap;
-import java.util.Map;
 
 public class EntityVertexPositionTracker implements VertexConsumer {
     public static Matrix4f MODEL_VIEW_PROJECTION;
@@ -75,47 +70,5 @@ public class EntityVertexPositionTracker implements VertexConsumer {
     @Override
     public @NonNull VertexConsumer setLineWidth(float f) {
         return this;
-    }
-
-    public static class BufferSource extends MultiBufferSource.BufferSource {
-
-        private final Map<RenderType, EntityVertexPositionTracker> renderTypeMap = new HashMap<>();
-        // have to use a map to prevent duplicate buffer source issues
-
-        public BufferSource() {
-            super(null, null);
-        }
-
-        @Override
-        public @NonNull VertexConsumer getBuffer(@NonNull RenderType renderType) {
-            return renderTypeMap.computeIfAbsent(renderType, o -> new EntityVertexPositionTracker());
-        }
-
-        @Override
-        public void endLastBatch() {
-
-        }
-
-        @Override
-        public void endBatch() {
-
-        }
-
-        @Override
-        public void endBatch(@NonNull RenderType renderType) {
-
-        }
-    }
-
-    public static class OutlineBufferSource extends net.minecraft.client.renderer.OutlineBufferSource {
-
-        private final Map<RenderType, EntityVertexPositionTracker> renderTypeMap = new HashMap<>();
-        // have to use a map to prevent duplicate buffer source issues
-
-        @Override
-        public @NonNull VertexConsumer getBuffer(@NonNull RenderType renderType) {
-            return renderTypeMap.computeIfAbsent(renderType, o -> new EntityVertexPositionTracker());
-        }
-
     }
 }

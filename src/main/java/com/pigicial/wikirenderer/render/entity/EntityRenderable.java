@@ -6,6 +6,7 @@ import com.pigicial.wikirenderer.WikiRenderer;
 import com.pigicial.wikirenderer.components.EntityTypeSpecificPropertiesComponent;
 import com.pigicial.wikirenderer.mixin.access.ClientMannequinAccessor;
 import com.pigicial.wikirenderer.mixin.access.ItemStackRenderStateAccessor;
+import com.pigicial.wikirenderer.mixin.access.LevelRendererAccessor;
 import com.pigicial.wikirenderer.mixin.access.MannequinAccessor;
 import com.pigicial.wikirenderer.render.CameraOrientationUtil;
 import com.pigicial.wikirenderer.render.DefaultRenderable;
@@ -261,7 +262,7 @@ public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> im
             WikiRenderer.inSpriteEntityDraw = properties.spriteRendering.get();
 
             EntityRenderDispatcher renderDispatcher = client.getEntityRenderDispatcher();
-            SubmitNodeStorage nodeStorage = client.gameRenderer.getSubmitNodeStorage();
+            SubmitNodeStorage nodeStorage = ((LevelRendererAccessor) client.levelRenderer).wikirenderer$getSubmitNodeStorage();
 
             EntityRenderState state = renderDispatcher.extractEntity(entity, properties.tickEntityAnimations.get() && !entity.isRemoved() ? tickDelta : 0);
 

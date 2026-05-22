@@ -2,6 +2,7 @@ package com.pigicial.wikirenderer.render.export;
 
 import com.mojang.blaze3d.GpuFormat;
 import com.mojang.blaze3d.buffers.GpuBuffer;
+import com.mojang.blaze3d.buffers.GpuBufferSlice;
 import com.mojang.blaze3d.pipeline.RenderTarget;
 import com.mojang.blaze3d.pipeline.TextureTarget;
 import com.mojang.blaze3d.platform.NativeImage;
@@ -25,6 +26,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix4f;
 import org.joml.Matrix4fStack;
+import org.joml.Vector4f;
 import org.lwjgl.system.MemoryUtil;
 
 import java.util.HashMap;
@@ -61,7 +63,8 @@ public class RenderableDispatcher {
 
         PROJECTION_CACHE.put(drawType, new DrawProjectionDataCache(new Matrix4f(projectionMatrix), new Matrix4f(modelViewStack), WikiRenderer.mainTargetOverride.width, WikiRenderer.mainTargetOverride.height));
 
-        Minecraft.getInstance().gameRenderer.getFeatureRenderDispatcher().renderAllFeatures();
+        renderable.drawSubmittedRenderFeatures();
+
         renderable.setupLighting();
         renderable.emitVerticesThenDraw(renderScreen, modelViewStack, new PoseStack(), tickDelta, timeSinceCreationMs);
         renderable.drawSubmittedRenderFeatures();
@@ -82,7 +85,7 @@ public class RenderableDispatcher {
         }
 
         if (previewTarget == null) {
-            previewTarget = new TextureTarget("WikiRenderer RenderableDispatcher Preview Framebuffer", width, height, true);
+            previewTarget = new TextureTarget("WikiRenderer RenderableDispatcher Preview Framebuffer", width, height, true, GpuFormat.RGBA8_UNORM);
         } else {
             if (previewTarget.width != width || previewTarget.height != height) {
                 previewTarget.resize(width, height);
@@ -94,7 +97,7 @@ public class RenderableDispatcher {
         int backgroundColor = globalProperties.showBackgroundColorInExports.get() ? globalProperties.backgroundColor : 0;
         RenderSystem.getDevice().createCommandEncoder().clearColorAndDepthTextures(
                 Objects.requireNonNull(previewTarget.getColorTexture()),
-                backgroundColor,
+                new Vector4f(backgroundColor),
                 Objects.requireNonNull(previewTarget.getDepthTexture()),
                 0.0
         );
@@ -110,13 +113,13 @@ public class RenderableDispatcher {
         int width = renderable.optionallyOverrideExportWidth(size);
         int height = renderable.optionallyOverrideExportHeight(size);
         float aspectRatio = width / (float) height;
-        TextureTarget target = new TextureTarget("WikiRenderer RenderableDispatcher.drawIntoTexture Framebuffer", width, height, true);
+        TextureTarget target = new TextureTarget("WikiRenderer RenderableDispatcher.drawIntoTexture Framebuffer", width, height, true, GpuFormat.RGBA8_UNORM);
 
         GlobalProperties globalProperties = GlobalProperties.get();
         int backgroundColor = globalProperties.showBackgroundColorInExports.get() ? globalProperties.backgroundColor : 0;
         RenderSystem.getDevice().createCommandEncoder().clearColorAndDepthTextures(
                 Objects.requireNonNull(target.getColorTexture()),
-                backgroundColor,
+                new Vector4f(backgroundColor),
                 Objects.requireNonNull(target.getDepthTexture()),
                 0.0
         );
@@ -246,7 +249,7 @@ public class RenderableDispatcher {
             try {
                 CommandEncoder commandEncoder = RenderSystem.getDevice().createCommandEncoder();
                 commandEncoder.copyTextureToBuffer(gpuTexture, gpuBuffer, 0, () -> {
-                    try (GpuBuffer.MappedView mappedView = commandEncoder.mapBuffer(gpuBuffer, true, false)) {
+                    try (GpuBufferSlice.MappedView mappedView = gpuBuffer.map(true, false)) {
                         NativeImage nativeImage = new NativeImage(NativeImage.Format.RGBA, width, height, false);
 
                         // Skip redundant safety checks, do the memory copies directly.
@@ -285,7 +288,7 @@ public class RenderableDispatcher {
         GpuTexture original = renderTarget.getColorTexture();
         assert original != null;
 
-        GpuTexture copy = RenderSystem.getDevice().createTexture(() -> "[WikiRenderer] Copy of: " + original.getLabel(),
+        GpuTexture copy = RenderSystem.getDevice().createTexture(() -> "[IsometricRenders] Copy of: " + original.getLabel(),
                 GpuTexture.USAGE_COPY_DST | GpuTexture.USAGE_COPY_SRC | GpuTexture.USAGE_TEXTURE_BINDING | GpuTexture.USAGE_RENDER_ATTACHMENT,
                 GpuFormat.RGBA8_UNORM, renderTarget.width, renderTarget.height, 1, 1);
 

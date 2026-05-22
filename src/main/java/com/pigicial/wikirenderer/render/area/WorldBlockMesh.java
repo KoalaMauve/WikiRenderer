@@ -1,5 +1,7 @@
 package com.pigicial.wikirenderer.render.area;
 
+import com.mojang.blaze3d.IndexType;
+import com.mojang.blaze3d.PrimitiveTopology;
 import com.mojang.blaze3d.buffers.GpuBuffer;
 import com.mojang.blaze3d.buffers.GpuBufferSlice;
 import com.mojang.blaze3d.systems.RenderPass;
@@ -20,18 +22,20 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.Options;
 import net.minecraft.client.TextureFilteringMethod;
+import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.DynamicUniforms;
 import net.minecraft.client.renderer.SectionBufferBuilderPack;
 import net.minecraft.client.renderer.SubmitNodeStorage;
-import net.minecraft.client.renderer.block.BlockAndTintGetter;
 import net.minecraft.client.renderer.block.BlockModelLighter;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderDispatcher;
 import net.minecraft.client.renderer.blockentity.state.BeaconRenderState;
 import net.minecraft.client.renderer.blockentity.state.BlockEntityRenderState;
 import net.minecraft.client.renderer.chunk.*;
+import net.minecraft.client.renderer.feature.ModelFeatureRenderer;
 import net.minecraft.client.renderer.state.level.CameraRenderState;
 import net.minecraft.client.renderer.texture.TextureAtlas;
 import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.BlockDestructionProgress;
 import net.minecraft.util.Util;
 import net.minecraft.util.profiling.Profiler;
 import net.minecraft.util.profiling.Zone;
@@ -69,7 +73,7 @@ public class WorldBlockMesh {
     private double lastUsedSlant;
 
     public WorldBlockMesh(
-            BlockAndTintGetter world,
+            ClientLevel world,
             MeshBounds bounds
     ) {
         this.bounds = bounds;
@@ -78,7 +82,7 @@ public class WorldBlockMesh {
         this.lastUsedSlant = Double.MAX_VALUE;
 
         Minecraft client = Minecraft.getInstance();
-        this.sectionRenderDispatcher = new SectionRenderDispatcher(client.level, client.levelRenderer, Util.backgroundExecutor(), client.renderBuffers(), null);
+        this.sectionRenderDispatcher = new SectionRenderDispatcher(Util.backgroundExecutor(), client.gameRenderer.renderBuffers(), null, null);
     }
 
     public void setRenderable(AreaRenderable renderable) {
@@ -169,7 +173,7 @@ public class WorldBlockMesh {
             sectionRenderDispatcher.lock();
             try {
                 try (Zone ignored = Profiler.get().zone("Upload WikiRenderer Mesh Global Buffers")) {
-                    sectionRenderDispatcher.uploadGlobalGeomBuffersToGPU();
+                    sectionRenderDispatcher.uploadTerrainBuffersToGpu();
                 }
 
                 for (MeshRenderSection section : sortedSections) {
@@ -186,7 +190,7 @@ public class WorldBlockMesh {
                             }
 
                             int combinedHash = 173;
-                            VertexFormat vertexFormat = layer.pipeline().getVertexFormat();
+                            VertexFormat vertexFormat = layer.pipeline().getVertexFormatBinding(0);
                             GpuBuffer vertexBuffer = slice.vertexBuffer();
                             if (layer != ChunkSectionLayer.TRANSLUCENT) {
                                 combinedHash = 31 * combinedHash + vertexBuffer.hashCode();
@@ -194,7 +198,7 @@ public class WorldBlockMesh {
 
                             int firstIndex = 0;
                             GpuBuffer indexBuffer;
-                            VertexFormat.IndexType indexType;
+                            IndexType indexType;
                             if (!draw.hasCustomIndexBuffer()) {
                                 if (draw.indexCount() > largestIndexCount) {
                                     largestIndexCount = draw.indexCount();
@@ -249,7 +253,18 @@ public class WorldBlockMesh {
         BlockEntityRenderDispatcher blockEntityDispatcher = Minecraft.getInstance().getBlockEntityRenderDispatcher();
         for (MeshRenderSection renderSection : this.subMeshes.values()) {
             renderSection.blockEntities.forEach((blockPos, entity) -> {
-                BlockEntityRenderState state = blockEntityDispatcher.tryExtractRenderState(entity, tickDelta, null);
+                SortedSet<BlockDestructionProgress> progresses = this.world.getDelegate().destructionProgress().get(blockPos.asLong());
+                ModelFeatureRenderer.CrumblingOverlay breakProgress;
+                if (!progresses.isEmpty()) {
+                    standardStack.pushPose();
+                    standardStack.translate(blockPos.getX(), blockPos.getY(), blockPos.getZ());
+                    breakProgress = new ModelFeatureRenderer.CrumblingOverlay(progresses.last().getProgress(), standardStack.last());
+                    standardStack.popPose();
+                } else {
+                    breakProgress = null;
+                }
+
+                BlockEntityRenderState state = blockEntityDispatcher.tryExtractRenderState(entity, tickDelta, breakProgress, true);
                 if (state instanceof BeaconRenderState && AreaPropertyBundle.INSTANCE.hideBeaconBeams.get()) {
                     return;
                 }
@@ -460,7 +475,7 @@ public class WorldBlockMesh {
     }
 
     protected BufferBuilder getOrBeginLayer(Map<ChunkSectionLayer, BufferBuilder> startedLayers, SectionBufferBuilderPack buffers, ChunkSectionLayer layer) {
-        return startedLayers.computeIfAbsent(layer, _ -> new BufferBuilder(buffers.buffer(layer), VertexFormat.Mode.QUADS, layer.vertexFormat()));
+        return startedLayers.computeIfAbsent(layer, _ -> new BufferBuilder(buffers.buffer(layer), PrimitiveTopology.QUADS, layer.vertexFormat()));
     }
 
     public Optional<List<Integer>> getAnimationCompletionTimings() {

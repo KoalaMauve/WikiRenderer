@@ -3,7 +3,8 @@ package com.pigicial.wikirenderer.render.item;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.pigicial.wikirenderer.WikiRenderer;
 import com.pigicial.wikirenderer.mixin.access.BlockEntityAccessor;
-import com.pigicial.wikirenderer.mixin.access.MinecraftAccessor;
+import com.pigicial.wikirenderer.mixin.access.BlockEntityRenderDispatcherAccessor;
+import com.pigicial.wikirenderer.mixin.access.LevelRendererAccessor;
 import com.pigicial.wikirenderer.property.GlobalProperties;
 import com.pigicial.wikirenderer.render.CameraOrientationUtil;
 import com.pigicial.wikirenderer.render.ParticleDisplayCondition;
@@ -16,6 +17,7 @@ import com.pigicial.wikirenderer.textures.TextureData;
 import com.pigicial.wikirenderer.textures.TextureDataProvider;
 import com.pigicial.wikirenderer.util.AnimationTimingUtil;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.SubmitNodeStorage;
 import net.minecraft.client.renderer.block.BlockModelRenderState;
 import net.minecraft.client.renderer.block.BlockModelResolver;
 import net.minecraft.client.renderer.block.model.BlockDisplayContext;
@@ -118,20 +120,22 @@ public class BlockStateRenderable
         matrices.pushPose();
         matrices.translate(-0.5, -0.5, -0.5);
 
+        SubmitNodeStorage submitNodeCollector = ((LevelRendererAccessor) this.client.levelRenderer).wikirenderer$getSubmitNodeStorage();
+
         // renders the main stuff
         if (this.state.getRenderShape() != RenderShape.INVISIBLE) {
             BlockModelRenderState blockModelRenderState = new BlockModelRenderState();
-            BlockModelResolver blockModelResolver = ((MinecraftAccessor) Minecraft.getInstance()).wikirenderer$getBlockModelResolver();
+            BlockModelResolver blockModelResolver = ((BlockEntityRenderDispatcherAccessor) Minecraft.getInstance().getBlockEntityRenderDispatcher()).wikirenderer$getBlockModelResolver();
             blockModelResolver.update(blockModelRenderState, state, displayContext);
-            blockModelRenderState.submit(matrices, this.client.gameRenderer.getSubmitNodeStorage(), LightCoordsUtil.FULL_BRIGHT, OverlayTexture.NO_OVERLAY, 0);
+            blockModelRenderState.submit(matrices, submitNodeCollector, LightCoordsUtil.FULL_BRIGHT, OverlayTexture.NO_OVERLAY, 0);
             // todo: figure out liquid rendering (waterlogged / fluid states)
         }
 
         // renders the extra stuff, like the book on the enchantment table, middle bell within the bell block, etc
-        BlockEntityRenderState renderState = this.blockEntity == null ? null : this.client.getBlockEntityRenderDispatcher().tryExtractRenderState(blockEntity, tickDelta, null);
+        BlockEntityRenderState renderState = this.blockEntity == null ? null : this.client.getBlockEntityRenderDispatcher().tryExtractRenderState(blockEntity, tickDelta, null, true);
         if (renderState != null) {
             renderState.lightCoords = LightCoordsUtil.FULL_BRIGHT;
-            this.client.getBlockEntityRenderDispatcher().submit(renderState, matrices, this.client.gameRenderer.getSubmitNodeStorage(), CameraOrientationUtil.createRenderState(this));
+            this.client.getBlockEntityRenderDispatcher().submit(renderState, matrices, submitNodeCollector, CameraOrientationUtil.createRenderState(this));
         }
 
         super.drawSubmittedRenderFeatures();

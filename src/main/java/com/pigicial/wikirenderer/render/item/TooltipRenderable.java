@@ -15,7 +15,6 @@ import net.minecraft.client.gui.render.pip.*;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.tooltip.ClientTooltipComponent;
 import net.minecraft.client.gui.screens.inventory.tooltip.DefaultTooltipPositioner;
-import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.state.gui.GuiRenderState;
 import net.minecraft.client.resources.model.sprite.AtlasManager;
 import net.minecraft.core.component.DataComponents;
@@ -65,18 +64,16 @@ public class TooltipRenderable extends DefaultRenderable<TooltipPropertyBundle> 
 
     private GuiRenderer getGuiRenderer(Minecraft client, GuiRenderState state) {
         AtlasManager atlasManager = client.getAtlasManager();
-        MultiBufferSource.BufferSource bufferSource = client.renderBuffers().bufferSource();
 
         List<PictureInPictureRenderer<?>> renderers = List.of(
                 new GuiEntityRenderer(client.getEntityRenderDispatcher()),
                 new GuiSkinRenderer(),
                 new GuiBookModelRenderer(),
                 new GuiBannerResultRenderer(atlasManager),
-                new GuiSignRenderer(atlasManager),
                 new GuiProfilerChartRenderer()
         );
 
-        return new GuiRenderer(state, bufferSource, client.gameRenderer.getSubmitNodeStorage(), client.gameRenderer.getFeatureRenderDispatcher(), renderers);
+        return new GuiRenderer(state, client.gameRenderer.featureRenderDispatcher(), renderers);
     }
 
     private Vector2ic positionTooltip(int screenWidth, int screenHeight, int x, int y, int width, int height) {

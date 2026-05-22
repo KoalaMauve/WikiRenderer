@@ -4,7 +4,9 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.brigadier.context.CommandContext;
 import com.pigicial.wikirenderer.WikiRenderer;
 import com.pigicial.wikirenderer.components.EntityTypeSpecificPropertiesComponent;
+import com.pigicial.wikirenderer.mixin.access.GameRendererAccessor;
 import com.pigicial.wikirenderer.mixin.access.ItemStackRenderStateAccessor;
+import com.pigicial.wikirenderer.mixin.access.LevelRendererAccessor;
 import com.pigicial.wikirenderer.property.GlobalProperties;
 import com.pigicial.wikirenderer.property.IntProperty;
 import com.pigicial.wikirenderer.render.CameraOrientationUtil;
@@ -136,7 +138,7 @@ public class AreaRenderable extends DefaultRenderable<AreaPropertyBundle> implem
         WikiRenderer.inAreaRenderDraw = true;
         AreaPropertyBundle properties = getProperties();
 
-        GlobalSettingsUniform globalSettings = Minecraft.getInstance().gameRenderer.getGlobalSettingsUniform();
+        GlobalSettingsUniform globalSettings = ((GameRendererAccessor) Minecraft.getInstance().gameRenderer).wikirenderer$getGlobalSettingsUniform();
         ClientLevel level = Minecraft.getInstance().level;
         long shaderAnimationTicks = 0; // i.e. end portals
         if (GlobalProperties.get().tickTextureAnimations.get() && level != null) {
@@ -170,7 +172,7 @@ public class AreaRenderable extends DefaultRenderable<AreaPropertyBundle> implem
         double ySize = boundingBox.getYsize();
         double zSize = boundingBox.getZsize();
 
-        SubmitNodeStorage nodeStorage = client.gameRenderer.getSubmitNodeStorage();
+        SubmitNodeStorage nodeStorage = ((LevelRendererAccessor) client.levelRenderer).wikirenderer$getSubmitNodeStorage();
         CameraRenderState cameraRenderState = CameraOrientationUtil.createRenderState(this);
 
         standardStack.setIdentity();

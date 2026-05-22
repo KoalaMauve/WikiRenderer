@@ -26,6 +26,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.util.Util;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.EntityTypes;
 import net.minecraft.world.entity.boss.enderdragon.EnderDragonPart;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.component.AttackRange;
@@ -55,16 +56,16 @@ public class RenderEntitySubCommand extends WikiRendererSubCommand {
         );
 
         DEFAULT_INVISIBLE_ENTITY_TYPES = List.of(
-                EntityType.TEXT_DISPLAY,
-                EntityType.OMINOUS_ITEM_SPAWNER,
-                EntityType.MARKER,
-                EntityType.INTERACTION,
-                EntityType.ITEM,
-                EntityType.ITEM_DISPLAY,
-                EntityType.EVOKER_FANGS,
-                EntityType.EXPERIENCE_ORB,
-                EntityType.BLOCK_DISPLAY,
-                EntityType.AREA_EFFECT_CLOUD
+                EntityTypes.TEXT_DISPLAY,
+                EntityTypes.OMINOUS_ITEM_SPAWNER,
+                EntityTypes.MARKER,
+                EntityTypes.INTERACTION,
+                EntityTypes.ITEM,
+                EntityTypes.ITEM_DISPLAY,
+                EntityTypes.EVOKER_FANGS,
+                EntityTypes.EXPERIENCE_ORB,
+                EntityTypes.BLOCK_DISPLAY,
+                EntityTypes.AREA_EFFECT_CLOUD
         );
     }
 

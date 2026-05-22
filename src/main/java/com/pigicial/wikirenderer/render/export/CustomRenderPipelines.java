@@ -1,8 +1,8 @@
 package com.pigicial.wikirenderer.render.export;
 
+import com.mojang.blaze3d.PrimitiveTopology;
 import com.mojang.blaze3d.pipeline.RenderPipeline;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
-import com.mojang.blaze3d.vertex.VertexFormat;
 import com.pigicial.wikirenderer.WikiRenderer;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.renderer.rendertype.RenderSetup;
@@ -26,19 +26,18 @@ public class CustomRenderPipelines {
             .build();
 
     // based on RenderPipelines.TEXT
-    public static final RenderPipeline ITEM_FRAME_MAP_FULL_BRIGHTNESS = RenderPipeline.builder(RenderPipelines.TEXT_SNIPPET, RenderPipelines.FOG_SNIPPET)
+    public static final RenderPipeline ITEM_FRAME_MAP_FULL_BRIGHTNESS = RenderPipeline.builder(RenderPipelines.TEXT_SNIPPET)
             .withLocation("pipeline/wikirenderer_item_frame_custom_brightness")
             .withVertexShader(Identifier.fromNamespaceAndPath(WikiRenderer.MOD_ID, "item_frame_full_bright"))
             .withFragmentShader("core/text")
-            .withSampler("Sampler0")
-            //.withSampler("Sampler2") normally this is included
-            .withVertexFormat(DefaultVertexFormat.POSITION_TEX_LIGHTMAP_COLOR, VertexFormat.Mode.QUADS)
+            .withVertexBinding(0, DefaultVertexFormat.POSITION_TEX_LIGHTMAP_COLOR)
+            .withPrimitiveTopology(PrimitiveTopology.QUADS)
             .build();
 
     private static final Function<Identifier, RenderType> ITEM_FRAME_RENDER_TYPE_CACHE = Util.memoize(
             identifier -> RenderType.create(
                     "wikirenderer_item_frame_brightness_override",
-                    RenderSetup.builder(ITEM_FRAME_MAP_FULL_BRIGHTNESS).withTexture("Sampler0", identifier).bufferSize(786432).createRenderSetup()
+                    RenderSetup.builder(ITEM_FRAME_MAP_FULL_BRIGHTNESS).withTexture("Sampler0", identifier).createRenderSetup()
             )
     );
 

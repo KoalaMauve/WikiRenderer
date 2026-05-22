@@ -26,7 +26,7 @@ public class TextureTransformMixin {
     )
     private static void overrideGlint(float scale, CallbackInfoReturnable<Matrix4f> cir) {
         if (WikiRenderer.inRenderableDraw && GlobalProperties.get().speedUpEnchantmentGlints.get()) {
-            GameRenderState state = Minecraft.getInstance().gameRenderer.getGameRenderState();
+            GameRenderState state = Minecraft.getInstance().gameRenderer.gameRenderState();
             savedGlintSpeed = state.optionsRenderState.glintSpeed;
             state.optionsRenderState.glintSpeed = 1F;
         }
@@ -38,7 +38,7 @@ public class TextureTransformMixin {
     )
     private static void resetGlint(float scale, CallbackInfoReturnable<Matrix4f> cir) {
         if (Double.isNaN(savedGlintSpeed)) return;
-        GameRenderState state = Minecraft.getInstance().gameRenderer.getGameRenderState();
+        GameRenderState state = Minecraft.getInstance().gameRenderer.gameRenderState();
         state.optionsRenderState.glintSpeed = savedGlintSpeed;
         savedGlintSpeed = Float.NaN;
     }

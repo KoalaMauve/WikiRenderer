@@ -1,6 +1,7 @@
 package com.pigicial.wikirenderer.render.item;
 
 import com.mojang.blaze3d.vertex.PoseStack;
+import com.pigicial.wikirenderer.mixin.access.LevelRendererAccessor;
 import com.pigicial.wikirenderer.render.export.ExportPathSpec;
 import com.pigicial.wikirenderer.screen.RenderScreen;
 import com.pigicial.wikirenderer.util.AnimationTimingUtil;
@@ -44,7 +45,7 @@ public class ItemAtlasRenderable extends ItemBasedRenderable<ItemAtlasPropertyBu
         matrices.scale(.1f, .1f, .1f);
         matrices.translate((-columns / 2f) * spacing - spacing / 2, (rows / 2f) * spacing + spacing / 2, 0);
 
-        SubmitNodeStorage nodeStorage = this.client.gameRenderer.getSubmitNodeStorage();
+        SubmitNodeStorage nodeStorage = ((LevelRendererAccessor) this.client.levelRenderer).wikirenderer$getSubmitNodeStorage();
         ItemModelResolver itemModelManager = this.client.getItemModelResolver();
         for (int row = 0; row < rows; row++) {
             matrices.translate(0, -spacing, 0);
