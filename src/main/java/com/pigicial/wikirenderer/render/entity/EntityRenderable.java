@@ -124,7 +124,7 @@ public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> im
 
         nbt.putString("id", EntityType.getKey(type).toString());
 
-        Entity entity = EntityType.loadEntityRecursive(nbt, minecraft.level, EntitySpawnReason.LOAD, EntityProcessor.NOP);
+        Entity entity = EntityType.loadEntityRecursive(nbt, minecraft.level, new EntitySpawnRequest(EntitySpawnReason.LOAD, true), EntityProcessor.NOP);
         if (entity == null) return null;
 
         CompoundTag savedNbt = EntityCloner.saveNBT(entity);

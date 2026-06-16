@@ -28,7 +28,7 @@ public class EntityCloner {
         CompoundTag nbt = saveNBT(source);
         nbt.putString("id", EntityType.getKey(source.getType()).toString());
 
-        Entity clonedEntity = EntityType.loadEntityRecursive(nbt, source.level(), EntitySpawnReason.LOAD, EntityProcessor.NOP);
+        Entity clonedEntity = EntityType.loadEntityRecursive(nbt, source.level(), new EntitySpawnRequest(EntitySpawnReason.LOAD, true), EntityProcessor.NOP);
         if (clonedEntity == null) return null;
 
         List<SynchedEntityData.DataValue<?>> nonDefaultValues = source.getEntityData().getNonDefaultValues();

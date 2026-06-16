@@ -43,7 +43,7 @@ public class RenderablePlayerEntity extends LocalPlayer {
                         new net.minecraft.network.Connection(PacketFlow.CLIENTBOUND),
                         new CommonListenerCookie(
                                 new LevelLoadTracker(0),
-                                profile, new WorldSessionTelemetryManager(TelemetryEventSender.DISABLED, false, Duration.ZERO, ""),
+                                profile, new WorldSessionTelemetryManager(TelemetryEventSender.DISABLED, false, Duration.ZERO, "", null),
                                 Minecraft.getInstance().level.registryAccess().freeze(),
                                 Minecraft.getInstance().level.enabledFeatures(),
                                 "Wisp Forest Enterprises", null, null, Map.of(), null, Map.of(), ServerLinks.EMPTY, Map.of(),
