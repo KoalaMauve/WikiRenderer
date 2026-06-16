@@ -70,13 +70,10 @@
     "world.LightmapRenderStateExtractorMixin",
     "world.MapRendererMixin",
     "world.MixinChunkSectionLayer",
-    "world.ParticleEngineMixin",
     "world.ProjectionTypeMixin",
-    "world.QuadParticleFeatureRendererMixin",
-    "world.QuadParticleGroupMixin",
     "world.particle.ElderGuardianParticleGroupMixin",
     "world.particle.ParticleEngineMixin",
-    "world.particle.ParticleFeatureRendererMixin",
+    "world.particle.QuadParticleFeatureRendererMixin",
     "world.particle.QuadParticleGroupMixin"
   ],
   "injectors": {
