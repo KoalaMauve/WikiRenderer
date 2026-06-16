@@ -46,12 +46,12 @@ public class ScreenSchedulerAndSaver {
         }
         Minecraft.getInstance().setScreenAndShow(SCHEDULED_SCREEN);
 
-        Screen currentScreen = Minecraft.getInstance().screen;
+        Screen currentScreen = Minecraft.getInstance().gui.screen();
         if (currentScreen instanceof AbstractContainerScreen<?> containerScreen) {
             SCHEDULED_SCREEN.setPreviouslyOpenedContainerScreen(containerScreen);
         }
 
-        Minecraft.getInstance().setScreen(SCHEDULED_SCREEN);
+        Minecraft.getInstance().gui.setScreen(SCHEDULED_SCREEN);
         SCHEDULED_SCREEN = null;
     }
 

@@ -1,5 +1,6 @@
 package com.pigicial.wikirenderer.mixin.world.particle;
 
+import com.pigicial.wikirenderer.mixin.access.ParticleGroupAccessor;
 import com.pigicial.wikirenderer.render.particle.ParticleRendererAndLooper;
 import net.minecraft.client.Camera;
 import net.minecraft.client.particle.ElderGuardianParticle;
@@ -23,7 +24,7 @@ public class ElderGuardianParticleGroupMixin {
     )
     private void captureParticlesAndMap(Frustum frustum, Camera camera, float partialTickTime, CallbackInfoReturnable<ParticleGroupRenderState> cir) {
         if (ParticleRendererAndLooper.renderingAndSavingParticlesForLooping) {
-            for (ElderGuardianParticle particle : ((ElderGuardianParticleGroup) (Object) this).getAll()) {
+            for (ElderGuardianParticle particle : ((ParticleGroupAccessor<ElderGuardianParticle>) this).wikirenderer$getParticles()) {
                 ElderGuardianParticleGroup.ElderGuardianParticleRenderState renderState = ElderGuardianParticleGroup.ElderGuardianParticleRenderState.fromParticle(particle, camera, partialTickTime);
                 ParticleRendererAndLooper.saveParticleData(particle, new ElderGuardianParticleGroup.State(List.of(renderState)));
             }

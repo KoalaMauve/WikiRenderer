@@ -3,6 +3,7 @@ package com.pigicial.wikirenderer.render.particle;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.pigicial.wikirenderer.WikiRenderer;
 import com.pigicial.wikirenderer.mixin.access.CameraInvoker;
+import com.pigicial.wikirenderer.mixin.access.LevelRendererAccessor;
 import com.pigicial.wikirenderer.property.DefaultPropertyBundle;
 import com.pigicial.wikirenderer.property.GlobalProperties;
 import com.pigicial.wikirenderer.render.CameraUtil;
@@ -71,7 +72,7 @@ public class ParticleRendererAndLooper {
                 loopingParticles ? 0 : tickDelta // 0 for looping to ensure tickDelta consistency
         );
         /* submit and render to vertexconsumers */
-        SubmitNodeStorage submitNodeStorage = client.gameRenderer.getSubmitNodeStorage();
+        SubmitNodeStorage submitNodeStorage = ((LevelRendererAccessor) client.levelRenderer).wikirenderer$getSubmitNodeStorage();
         particleBatch.submit(submitNodeStorage, cameraRenderState);
 
         handleCompletedParticles();

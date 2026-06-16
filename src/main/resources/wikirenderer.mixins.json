@@ -34,6 +34,7 @@
     "access.NativeImageInvoker",
     "access.ParticleAccessor",
     "access.ParticleEngineAccessor",
+    "access.ParticleGroupAccessor",
     "access.RenderSectionInvoker",
     "access.SpriteContentsAccessor",
     "entity.DefaultPlayerSkinMixin",
@@ -41,7 +42,6 @@
     "entity.HumanoidArmorLayerMixin",
     "entity.LivingEntityRendererMixin",
     "entity.NameTagFeatureRendererMixin",
-    "entity.RenderBuffersMixin",
     "entity.RenderSetupMixin",
     "entity.RenderTypeFeatureRendererMixin",
     "entity.SubmitNodeCollectionMixin",
@@ -72,12 +72,12 @@
     "world.MixinChunkSectionLayer",
     "world.ParticleEngineMixin",
     "world.ProjectionTypeMixin",
+    "world.QuadParticleFeatureRendererMixin",
+    "world.QuadParticleGroupMixin",
     "world.particle.ElderGuardianParticleGroupMixin",
     "world.particle.ParticleEngineMixin",
     "world.particle.ParticleFeatureRendererMixin",
-    "world.particle.QuadParticleGroupMixin",
-    "world.QuadParticleFeatureRendererMixin",
-    "world.QuadParticleGroupMixin"
+    "world.particle.QuadParticleGroupMixin"
   ],
   "injectors": {
     "defaultRequire": 1

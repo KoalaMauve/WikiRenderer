@@ -78,7 +78,7 @@ public class SkyBlockTimingDataCacher {
                 }
             }
 
-            if (!foundTextureDataOnArmor && Minecraft.getInstance().player == entity && !(Minecraft.getInstance().screen instanceof RenderScreen)) {
+            if (!foundTextureDataOnArmor && Minecraft.getInstance().player == entity && !(Minecraft.getInstance().gui.screen() instanceof RenderScreen)) {
                 // make it easier to swap helmets on and off yourself
                 this.textureData.invalidate(entity.getUUID());
             }
