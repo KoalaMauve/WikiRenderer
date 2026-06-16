@@ -1,6 +1,8 @@
 package com.pigicial.wikirenderer.screen;
 
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 
 public class ScreenSchedulerAndSaver {
 
@@ -43,6 +45,13 @@ public class ScreenSchedulerAndSaver {
             SAVED_SCREEN = null;
         }
         Minecraft.getInstance().setScreenAndShow(SCHEDULED_SCREEN);
+
+        Screen currentScreen = Minecraft.getInstance().screen;
+        if (currentScreen instanceof AbstractContainerScreen<?> containerScreen) {
+            SCHEDULED_SCREEN.setPreviouslyOpenedContainerScreen(containerScreen);
+        }
+
+        Minecraft.getInstance().setScreen(SCHEDULED_SCREEN);
         SCHEDULED_SCREEN = null;
     }
 

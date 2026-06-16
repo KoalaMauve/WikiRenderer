@@ -4,13 +4,18 @@ import com.pigicial.wikirenderer.command.subcommands.RenderBlockSubCommand;
 import com.pigicial.wikirenderer.command.subcommands.RenderEntitySubCommand;
 import com.pigicial.wikirenderer.mixin.access.AbstractContainerScreenAccessor;
 import com.pigicial.wikirenderer.mixin.access.CreativeModeInventoryScreenAccessor;
+import com.pigicial.wikirenderer.property.GlobalProperties;
 import com.pigicial.wikirenderer.render.area.AreaSelectionHelper;
 import com.pigicial.wikirenderer.render.item.ItemRenderable;
 import com.pigicial.wikirenderer.render.item.TooltipRenderable;
 import com.pigicial.wikirenderer.render.screen.ContainerScreenRenderable;
+import com.pigicial.wikirenderer.render.skyblock.frame_based.SkyBlockTimingDataCacher;
 import com.pigicial.wikirenderer.screen.RenderScreen;
 import com.pigicial.wikirenderer.screen.ScreenSchedulerAndSaver;
 import com.pigicial.wikirenderer.screen.SelectRenderTaskScreen;
+import com.pigicial.wikirenderer.textures.PlayerTextureUtils;
+import com.pigicial.wikirenderer.textures.TextureData;
+import com.pigicial.wikirenderer.util.Translate;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper;
 import net.fabricmc.fabric.api.client.screen.v1.ScreenEvents;
@@ -82,28 +87,43 @@ public class WikiRendererKeybinds {
         });
 
         ScreenEvents.AFTER_INIT.register((client, screen, _, _) -> ScreenKeyboardEvents.afterKeyPress(screen).register((_, key) -> {
-            if (key.key() == KeyMappingHelper.getBoundKeyOf(KEYBIND_RENDER_HOVERED_ITEM_OR_VIEWED_ENTITY).getValue()) {
+            if (Minecraft.getInstance().options.keyDebugModifier.isDown()) {
+                return;
+            }
+
+            if (KEYBIND_RENDER_HOVERED_ITEM_OR_VIEWED_ENTITY.matches(key)) {
                 ItemStack hoveredSlot = getHoveredSlot(client);
                 if (hoveredSlot != null) {
+                    if (GlobalProperties.get().sbFrameRenderingKeybindOverrides.get()) {
+                        TextureData textureData = PlayerTextureUtils.getTextureDataFromPlayerHead(hoveredSlot);
+                        if (textureData == null) {
+                            Translate.sendMessage("sb_player_head_mark_first_fail");
+                        } else {
+                            Translate.sendMessage("sb_player_head_mark_first_success");
+                            SkyBlockTimingDataCacher.getInstance().markTextureAsFirst(textureData);
+                        }
+
+                        return;
+                    }
                     ScreenSchedulerAndSaver.openImmediately(new RenderScreen(new ItemRenderable(hoveredSlot)));
                 }
             }
 
-            if (key.key() == KeyMappingHelper.getBoundKeyOf(KEYBIND_RENDER_HOVERED_ITEM_TOOLTIP).getValue()) {
+            if (KEYBIND_RENDER_HOVERED_ITEM_TOOLTIP.matches(key)) {
                 ItemStack hoveredSlot = getHoveredSlot(client);
                 if (hoveredSlot != null) {
                     ScreenSchedulerAndSaver.openImmediately(new RenderScreen(new TooltipRenderable(hoveredSlot)));
                 }
             }
 
-            if (key.key() == KeyMappingHelper.getBoundKeyOf(KEYBIND_BATCH_RENDER_INVENTORY_ITEMS).getValue()) {
+            if (KEYBIND_BATCH_RENDER_INVENTORY_ITEMS.matches(key)) {
                 List<ItemStack> items = getItems(client);
                 if (items != null && !items.isEmpty()) {
                     Minecraft.getInstance().setScreenAndShow(new SelectRenderTaskScreen(items));
                 }
             }
 
-            if (key.key() == KeyMappingHelper.getBoundKeyOf(KEYBIND_RENDER_INVENTORY).getValue()) {
+            if (KEYBIND_RENDER_INVENTORY.matches(key)) {
                 Screen currentScreen = client.gui.screen();
                 if (currentScreen instanceof AbstractContainerScreen<?> containerScreen) {
                     ScreenSchedulerAndSaver.openImmediately(new RenderScreen(new ContainerScreenRenderable(containerScreen)));

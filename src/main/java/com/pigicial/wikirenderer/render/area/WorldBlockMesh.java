@@ -17,6 +17,7 @@ import com.pigicial.wikirenderer.WikiRenderer;
 import com.pigicial.wikirenderer.render.OrthographicSort;
 import com.pigicial.wikirenderer.render.area.bounds.MeshBounds;
 import com.pigicial.wikirenderer.render.area.side_view.WalkabilityFilter;
+import com.pigicial.wikirenderer.util.compatibility.EntityCullingCheck;
 import com.pigicial.wikirenderer.util.compatibility.ShaderCheck;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import net.minecraft.client.Minecraft;
@@ -250,6 +251,7 @@ public class WorldBlockMesh {
         standardStack.pushPose();
         standardStack.translate(-minCorner.getX(), -minCorner.getY(), -minCorner.getZ());
 
+        EntityCullingCheck.disableBlockEntityCullingIfPossible();
         BlockEntityRenderDispatcher blockEntityDispatcher = Minecraft.getInstance().getBlockEntityRenderDispatcher();
         for (MeshRenderSection renderSection : this.subMeshes.values()) {
             renderSection.blockEntities.forEach((blockPos, entity) -> {
@@ -282,6 +284,7 @@ public class WorldBlockMesh {
 
         standardStack.popPose();
         renderable.drawSubmittedRenderFeatures();
+        EntityCullingCheck.reEnableBlockEntityCullingIfNecessary();
     }
 
     public synchronized void scheduleRebuild(boolean async) {
@@ -292,7 +295,10 @@ public class WorldBlockMesh {
                 ? MeshState.REBUILDING
                 : MeshState.BUILDING;
 
-        this.subMeshes.values().forEach(MeshRenderSection::reset);
+        this.subMeshes.values().forEach(section -> {
+            section.reset();
+            section.markBuildNotAttempted();
+        });
         this.subMeshes.clear();
 
         this.orthographicTransparencySorting = WikiRenderer.orthographicSorting;
@@ -325,19 +331,28 @@ public class WorldBlockMesh {
     }
 
     private void updateBuildingStatus() {
-        if (currentlyFullyBuilding) {
-            int amountBuilt = 0;
-            for (MeshRenderSection sections : this.subMeshes.values()) {
-                if (!sections.isBuilding) amountBuilt++;
-            }
-            this.fullBuildProgress = (float) amountBuilt / this.subMeshes.size();
-
-            if (amountBuilt == this.subMeshes.size()) {
-                currentlyFullyBuilding = false;
-                buildingCancelled = false;
-                this.state = MeshState.READY;
-            }
+        int amountBuilt = 0;
+        for (MeshRenderSection sections : this.subMeshes.values()) {
+            if (sections.hasBuildBeenAttempted()) amountBuilt++;
         }
+
+        if (amountBuilt == this.subMeshes.size()) {
+            currentlyFullyBuilding = false;
+            if (buildingCancelled) {
+                state = MeshState.CANCELLED;
+                buildingCancelled = false;
+                return;
+            }
+
+            if (state == MeshState.CANCELLED) {
+                return;
+            }
+
+            buildingCancelled = false;
+            state = MeshState.READY;
+        }
+
+        this.fullBuildProgress = (float) amountBuilt / this.subMeshes.size();
     }
 
     private void updateOutdatedMeshSections() {
@@ -414,6 +429,16 @@ public class WorldBlockMesh {
             return;
         }
 
+        this.refreshWalkabilityFilter();
+
+        BlockModelLighter.enableCaching();
+        for (MeshRenderSection renderSection : subMeshes) {
+            renderSection.buildAndSubmit(this);
+        }
+        BlockModelLighter.clearCache();
+    }
+
+    protected void refreshWalkabilityFilter() {
         this.world.setWalkabilityFilter(null);
         WalkabilityFilter walkabilityFilter = null;
         AreaPropertyBundle properties = AreaPropertyBundle.INSTANCE;
@@ -424,14 +449,6 @@ public class WorldBlockMesh {
             }
         }
         this.world.setWalkabilityFilter(walkabilityFilter);
-
-        BlockModelLighter.enableCaching();
-
-        for (MeshRenderSection renderSection : subMeshes) {
-            renderSection.buildAndSubmit(this);
-        }
-
-        BlockModelLighter.clearCache();
     }
 
     private MeshRenderSection createRenderSection(int sectionX, int sectionY, int sectionZ) {
@@ -487,7 +504,7 @@ public class WorldBlockMesh {
     }
 
     public void dispose() {
-        subMeshes.values().forEach(SectionRenderDispatcher.RenderSection::reset);
+        subMeshes.values().forEach(MeshRenderSection::reset);
         subMeshes.clear();
         resortBufferPack.close();
     }

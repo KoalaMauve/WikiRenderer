@@ -28,10 +28,16 @@ public class EntityRenderBoundsUtil {
 
     @Nullable
     public static EntityVertexBounds getPositionOffsetBasedBounds(Entity entity) {
-        float tickDelta = Minecraft.getInstance().getDeltaTracker().getGameTimeDeltaPartialTick(false);
-        EntityRenderState entityRenderState = Minecraft.getInstance().getEntityRenderDispatcher().extractEntity(entity, tickDelta);
-        CameraRenderState cameraRenderState = ((LevelRendererAccessor) Minecraft.getInstance().levelRenderer).wikirenderer$getLevelRenderState().cameraRenderState;
-        return getPositionOffsetBasedBounds(entity, entityRenderState, cameraRenderState);
+        try {
+            WikiRenderer.inBoundsCalculation = true;
+            float tickDelta = Minecraft.getInstance().getDeltaTracker().getGameTimeDeltaPartialTick(false);
+            EntityRenderState entityRenderState = Minecraft.getInstance().getEntityRenderDispatcher().extractEntity(entity, tickDelta);
+            CameraRenderState cameraRenderState = ((LevelRendererAccessor) Minecraft.getInstance().levelRenderer).wikirenderer$getLevelRenderState().cameraRenderState;
+
+            return getPositionOffsetBasedBounds(entity, entityRenderState, cameraRenderState);
+        } finally {
+            WikiRenderer.inBoundsCalculation = false;
+        }
     }
 
     @Nullable
@@ -43,9 +49,15 @@ public class EntityRenderBoundsUtil {
     // this gets the actual bounds of the rendered entity, rather than relying on extremely flaky and inconsistent bounding box data
     @Nullable
     public static EntityVertexBounds getBounds(EntityRenderState renderState, CameraRenderState cameraRenderState, double xOffset, double yOffset, double zOffset) {
-        SubmitNodeStorage tempStorage = new SubmitNodeStorage();
-        Minecraft.getInstance().getEntityRenderDispatcher().submit(renderState, cameraRenderState, xOffset, yOffset, zOffset, new PoseStack(), tempStorage);
-        return submitVertexData(tempStorage);
+        try {
+            WikiRenderer.inBoundsCalculation = true;
+            SubmitNodeStorage tempStorage = new SubmitNodeStorage();
+            Minecraft.getInstance().getEntityRenderDispatcher().submit(renderState, cameraRenderState, xOffset, yOffset, zOffset, new PoseStack(), tempStorage);
+
+            return submitVertexData(tempStorage);
+        } finally {
+            WikiRenderer.inBoundsCalculation = false;
+        }
     }
 
     @Nullable
@@ -87,23 +99,34 @@ public class EntityRenderBoundsUtil {
     }
 
     private static EntityVertexBounds submitVertexData(SubmitNodeStorage tempStorage) {
-        EntityVertexPositionTracker.BOUNDS = null;
-        EntityRenderBoundsUtil.currentBufferSource = new EntityVertexPositionTracker();
+        try {
+            WikiRenderer.inBoundsCalculation = true;
+            EntityVertexPositionTracker.BOUNDS = null;
+            EntityRenderBoundsUtil.currentBufferSource = new EntityVertexPositionTracker();
 
-        FeatureRenderDispatcher featureRenderDispatcher = Minecraft.getInstance().gameRenderer.featureRenderDispatcher();
-        featureRenderDispatcher.prepareFrame(tempStorage);
+            FeatureRenderDispatcher featureRenderDispatcher = Minecraft.getInstance().gameRenderer.featureRenderDispatcher();
+            featureRenderDispatcher.prepareFrame(tempStorage);
 
-        return EntityVertexPositionTracker.BOUNDS;
+            return EntityVertexPositionTracker.BOUNDS;
+        } finally {
+            WikiRenderer.inBoundsCalculation = false;
+        }
     }
 
     public static boolean isNametagOnlyRenderedData(Entity entity) {
-        EntityRenderState entityRenderState = Minecraft.getInstance().getEntityRenderDispatcher().extractEntity(entity, 0);
-        CameraRenderState cameraRenderState = ((LevelRendererAccessor) Minecraft.getInstance().levelRenderer).wikirenderer$getLevelRenderState().cameraRenderState;
+        try {
+            WikiRenderer.inBoundsCalculation = true;
+            EntityRenderState entityRenderState = Minecraft.getInstance().getEntityRenderDispatcher().extractEntity(entity, 0);
+            CameraRenderState cameraRenderState = ((LevelRendererAccessor) Minecraft.getInstance().levelRenderer).wikirenderer$getLevelRenderState().cameraRenderState;
 
-        SubmitNodeStorage tempStorage = new SubmitNodeStorage();
-        Minecraft.getInstance().getEntityRenderDispatcher().submit(entityRenderState, cameraRenderState, 0, 0, 0, new PoseStack(), tempStorage);
+            SubmitNodeStorage tempStorage = new SubmitNodeStorage();
+            Minecraft.getInstance().getEntityRenderDispatcher().submit(entityRenderState, cameraRenderState, 0, 0, 0, new PoseStack(), tempStorage);
 
-        EntityVertexPositionTracker.BOUNDS = null;
+            EntityVertexPositionTracker.BOUNDS = null;
+        } finally {
+            WikiRenderer.inBoundsCalculation = false;
+        }
+
         // todo: replace this
         /*
         for (SubmitNodeCollection collection : tempStorage.getSubmitsPerOrder().values()) {

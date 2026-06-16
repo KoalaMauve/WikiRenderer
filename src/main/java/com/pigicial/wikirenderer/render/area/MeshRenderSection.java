@@ -41,6 +41,7 @@ public class MeshRenderSection extends SectionRenderDispatcher.RenderSection {
     protected volatile boolean isDirty = false;
     protected volatile boolean isBuilding = false;
     protected volatile boolean forceUpdate = false;
+    protected volatile boolean buildAttempted = false;
 
     public MeshRenderSection(SectionRenderDispatcher dispatcher, int sectionX, int sectionY, int sectionZ) {
         dispatcher.super((int) getSectionIndex(sectionX, sectionY, sectionZ), 0);
@@ -167,6 +168,7 @@ public class MeshRenderSection extends SectionRenderDispatcher.RenderSection {
             if (results.renderedLayers.isEmpty()) {
                 reset();
                 setNotDirty();
+                this.blockEntities = blockEntities;
                 return;
             }
 
@@ -197,6 +199,7 @@ public class MeshRenderSection extends SectionRenderDispatcher.RenderSection {
         isDirty = false;
         isBuilding = false;
         forceUpdate = false;
+        buildAttempted = true;
     }
 
     public void setDirty(boolean force) {
@@ -221,6 +224,14 @@ public class MeshRenderSection extends SectionRenderDispatcher.RenderSection {
         if (animationCompletionTimings != null) {
             animationCompletionTimings.clear();
         }
+    }
+
+    public void markBuildNotAttempted() {
+        buildAttempted = false;
+    }
+
+    public boolean hasBuildBeenAttempted() {
+        return buildAttempted;
     }
 
     public void reSortTransparencyAndSubmit(WorldBlockMesh mesh) {
