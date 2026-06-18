@@ -7,10 +7,10 @@ import com.mojang.blaze3d.buffers.GpuBufferSlice;
 import com.mojang.blaze3d.pipeline.RenderTarget;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.pigicial.wikirenderer.WikiRenderer;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.render.GuiRenderer;
 import net.minecraft.client.renderer.DynamicUniforms;
-import org.joml.*;
+import net.minecraft.client.renderer.GameRenderer;
+import org.joml.Matrix4f;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 
@@ -18,8 +18,8 @@ import org.spongepowered.asm.mixin.injection.At;
 @Mixin(GuiRenderer.class)
 public class GuiRendererMixin {
 
-    @WrapOperation(method = "draw", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/Minecraft;getMainRenderTarget()Lcom/mojang/blaze3d/pipeline/RenderTarget;"))
-    private RenderTarget overrideRenderFramebuffer(Minecraft instance, Operation<RenderTarget> original) {
+    @WrapOperation(method = "draw", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/GameRenderer;mainRenderTarget()Lcom/mojang/blaze3d/pipeline/RenderTarget;"))
+    private RenderTarget overrideRenderFramebuffer(GameRenderer instance, Operation<RenderTarget> original) {
         if (WikiRenderer.mainTargetOverride != null) return WikiRenderer.mainTargetOverride;
         return original.call(instance);
     }

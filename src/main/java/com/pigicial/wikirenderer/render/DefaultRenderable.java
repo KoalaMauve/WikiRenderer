@@ -12,7 +12,6 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.Lightmap;
 import net.minecraft.client.renderer.LightmapRenderStateExtractor;
 import net.minecraft.client.renderer.SubmitNodeStorage;
-import net.minecraft.client.renderer.culling.Frustum;
 import net.minecraft.client.renderer.state.LightmapRenderState;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Vector3f;

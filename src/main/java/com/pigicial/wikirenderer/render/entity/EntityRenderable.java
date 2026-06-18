@@ -132,6 +132,7 @@ public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> im
         if (!nbtFilterRequirement.passesFilter(nbt, savedNbt)) return null;
 
         entity.absSnapTo(minecraft.player.getX(), minecraft.player.getY(), minecraft.player.getZ());
+        entity.setId(Integer.MAX_VALUE);
         return new EntityRenderable(null, entity);
     }
 

@@ -54,6 +54,7 @@ public class EntityCloner {
             livingClone.getAttributes().assignAllValues(livingSource.getAttributes());
         }
 
+        clonedEntity.setId(Integer.MAX_VALUE); // if id is 0 (not set), it fails
         return clonedEntity;
     }
 
@@ -120,6 +121,7 @@ public class EntityCloner {
         elytraData.isometric$setRotZ((float) (-Math.PI / 12));
         playerClone.elytraAnimationState.tick();
 
+        playerClone.setId(Integer.MAX_VALUE);
         return playerClone;
     }
 

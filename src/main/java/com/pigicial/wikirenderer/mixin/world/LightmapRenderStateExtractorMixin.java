@@ -65,10 +65,10 @@ public class LightmapRenderStateExtractorMixin {
             method = "extract",
             at = @At(
                     value = "INVOKE",
-                    target = "Lnet/minecraft/client/renderer/GameRenderer;getNightVisionScale(Lnet/minecraft/world/entity/LivingEntity;F)F"
+                    target = "Lnet/minecraft/client/renderer/GameRenderer;nightVisionScale(Lnet/minecraft/world/entity/LivingEntity;F)F"
             )
     )
-    private float forceFullNightVisionScale(LivingEntity entity, float f, Operation<Float> original) {
-        return WikiRenderer.inRenderableDraw ? (AreaPropertyBundle.INSTANCE.useNightVision.get() ? 1.0f : 0.0f) : original.call(entity, f);
+    private float forceFullNightVisionScale(LivingEntity camera, float a, Operation<Float> original) {
+        return WikiRenderer.inRenderableDraw ? (AreaPropertyBundle.INSTANCE.useNightVision.get() ? 1.0f : 0.0f) : original.call(camera, a);
     }
 }

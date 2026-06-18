@@ -845,6 +845,16 @@ public class EntityTypeSpecificOverrides<S extends EntityRenderState> {
             overrides.registerFloatOverride("yHeadRotation", s -> s.yRot, (s, value) -> s.yRot = value);
         });
 
+        registerOverrides(SulfurCubeRenderState.class, overrides -> {
+            overrides.registerBlockStateOverride("containedBlock", s -> null, (s, value) -> {
+                if (value != null) {
+                    BlockModelResolver blockModelResolver = ((BlockEntityRenderDispatcherAccessor) Minecraft.getInstance().getBlockEntityRenderDispatcher()).wikirenderer$getBlockModelResolver();
+                    blockModelResolver.update(s.containedBlock, value, SulfurCubeRenderer.BLOCK_DISPLAY_CONTEXT);
+                }
+            });
+            overrides.registerFloatOverride("fuseRemainingTicks", s -> s.fuseRemainingTicks, (s, value) -> s.fuseRemainingTicks = value);
+        });
+
         // text display
 
         registerOverrides(ThrownItemRenderState.class, overrides ->

@@ -7,6 +7,8 @@ import com.pigicial.wikirenderer.util.CornerData;
 import com.pigicial.wikirenderer.util.DrawEntityDataCache;
 import com.pigicial.wikirenderer.util.DrawProjectionDataCache;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.RenderBuffers;
+import net.minecraft.client.renderer.SubmitNodeCollection;
 import net.minecraft.client.renderer.SubmitNodeStorage;
 import net.minecraft.client.renderer.entity.EntityRenderDispatcher;
 import net.minecraft.client.renderer.entity.EntityRenderer;
@@ -25,6 +27,7 @@ import java.util.List;
 public class EntityRenderBoundsUtil {
 
     public static EntityVertexPositionTracker currentBufferSource = new EntityVertexPositionTracker();
+    private static FeatureRenderDispatcher featureRenderDispatcher;
 
     @Nullable
     public static EntityVertexBounds getPositionOffsetBasedBounds(Entity entity) {
@@ -104,8 +107,11 @@ public class EntityRenderBoundsUtil {
             EntityVertexPositionTracker.BOUNDS = null;
             EntityRenderBoundsUtil.currentBufferSource = new EntityVertexPositionTracker();
 
-            FeatureRenderDispatcher featureRenderDispatcher = Minecraft.getInstance().gameRenderer.featureRenderDispatcher();
-            featureRenderDispatcher.prepareFrame(tempStorage);
+            for (SubmitNodeCollection collection : tempStorage.getSubmitsPerOrder().values()) {
+                collection.shadows.clear();
+            }
+
+            getOrCreateFeatureRenderDispatcher().prepareFrame(tempStorage).close();
 
             return EntityVertexPositionTracker.BOUNDS;
         } finally {
@@ -122,34 +128,34 @@ public class EntityRenderBoundsUtil {
             SubmitNodeStorage tempStorage = new SubmitNodeStorage();
             Minecraft.getInstance().getEntityRenderDispatcher().submit(entityRenderState, cameraRenderState, 0, 0, 0, new PoseStack(), tempStorage);
 
-            EntityVertexPositionTracker.BOUNDS = null;
+            for (SubmitNodeCollection collection : tempStorage.getSubmitsPerOrder().values()) {
+                if (!collection.solid.isEmpty() ||
+                    !collection.translucentModels.isEmpty() ||
+                    !collection.translucentCustomGeometry.isEmpty() ||
+                    !collection.translucentBlocksAndItems.isEmpty()) {
+                    return false; // other submits, not just text
+                }
+            }
+
+            return tempStorage.getSubmitsPerOrder().values().stream().anyMatch(collection ->
+                    !collection.nameTags.isEmpty() || !collection.seeThroughNameTags.isEmpty()
+            );
         } finally {
             WikiRenderer.inBoundsCalculation = false;
         }
+    }
 
-        // todo: replace this
-        /*
-        for (SubmitNodeCollection collection : tempStorage.getSubmitsPerOrder().values()) {
-            renderSolids(collection);
+    private static FeatureRenderDispatcher getOrCreateFeatureRenderDispatcher() {
+        if (featureRenderDispatcher == null) {
+            Minecraft minecraft = Minecraft.getInstance();
 
-            MODEL_FEATURE_RENDERER.renderTranslucent(collection, currentBufferSource, OUTLINE_BUFFER_SOURCE, currentBufferSource);
-            MODEL_PART_FEATURE_RENDERER.renderTranslucent(collection, currentBufferSource, OUTLINE_BUFFER_SOURCE, currentBufferSource);
-            TEXT_FEATURE_RENDERER.renderTranslucent(collection, currentBufferSource);
-            ITEM_FEATURE_RENDERER.renderTranslucent(collection, currentBufferSource, OUTLINE_BUFFER_SOURCE);
-            BLOCK_FEATURE_RENDERER.renderTranslucent(collection, currentBufferSource, Minecraft.getInstance().getModelManager().getBlockStateModelSet(), OUTLINE_BUFFER_SOURCE, currentBufferSource, Minecraft.getInstance().gameRenderer.getGameRenderState().optionsRenderState);
-            CUSTOM_FEATURE_RENDERER.renderTranslucent(collection, currentBufferSource);
+            // this has to be overwritten so a different stagedVertexBuffer is used, otherwise the game will see
+            // that something other than the main rendering system is messing with it and it'll crash
+            RenderBuffers renderBuffers = new RenderBuffers(1);
+
+            featureRenderDispatcher = new FeatureRenderDispatcher(renderBuffers, minecraft.getModelManager(), minecraft.getAtlasManager(), minecraft.font, minecraft.gameRenderer.gameRenderState());
         }
 
-        if (EntityVertexPositionTracker.BOUNDS == null) {
-            for (SubmitNodeCollection collection : tempStorage.getSubmitsPerOrder().values()) {
-                NAME_TAG_FEATURE_RENDERER.renderTranslucent(collection, currentBufferSource, Minecraft.getInstance().font);
-            }
-
-            return EntityVertexPositionTracker.BOUNDS != null;
-        }
-
-         */
-
-        return false;
+        return featureRenderDispatcher;
     }
 }

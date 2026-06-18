@@ -23,7 +23,7 @@ public abstract class RenderSetupMixin {
 
     // Fixes player skins sometimes having an extra line on the top (only appears at certain scales/rotations/positions)
     @Redirect(
-            method = "getTextures",
+            method = "prepareTextures",
             at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/texture/AbstractTexture;getSampler()Lcom/mojang/blaze3d/textures/GpuSampler;")
     )
     private GpuSampler wikirenderer$overrideSampler(AbstractTexture instance) {

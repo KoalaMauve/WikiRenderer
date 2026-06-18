@@ -38,8 +38,6 @@ import net.minecraft.client.renderer.texture.TextureAtlas;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.BlockDestructionProgress;
 import net.minecraft.util.Util;
-import net.minecraft.util.profiling.Profiler;
-import net.minecraft.util.profiling.Zone;
 import org.joml.Matrix4f;
 import org.joml.Matrix4fc;
 
@@ -50,6 +48,7 @@ import java.util.concurrent.ConcurrentHashMap;
 // todo: not a fan of how entities are handled in AreaRenderable and blocks are here, maybe they should be merged
 public class WorldBlockMesh {
 
+    private static SectionRenderDispatcher sectionRenderDispatcher;
     public static boolean overrideTerrainTransparencyRenderPipelines = false;
     public static GpuSampler terrainSampler = null;
 
@@ -57,7 +56,6 @@ public class WorldBlockMesh {
     public final MeshBounds bounds;
     private AreaRenderable renderable;
 
-    private final SectionRenderDispatcher sectionRenderDispatcher;
     protected final SectionBufferBuilderPack resortBufferPack = new SectionBufferBuilderPack();
     public final Map<Long, MeshRenderSection> subMeshes = new ConcurrentHashMap<>();
 
@@ -83,7 +81,9 @@ public class WorldBlockMesh {
         this.lastUsedSlant = Double.MAX_VALUE;
 
         Minecraft client = Minecraft.getInstance();
-        this.sectionRenderDispatcher = new SectionRenderDispatcher(Util.backgroundExecutor(), client.gameRenderer.renderBuffers(), null, null);
+        if (sectionRenderDispatcher == null) {
+            sectionRenderDispatcher = new SectionRenderDispatcher(Util.backgroundExecutor(), client.gameRenderer.renderBuffers(), null, s -> {});
+        }
     }
 
     public void setRenderable(AreaRenderable renderable) {
@@ -141,6 +141,13 @@ public class WorldBlockMesh {
             overrideTerrainTransparencyRenderPipelines = sectionLayer == ChunkSectionLayerGroup.OPAQUE;
             sections.renderGroup(sectionLayer, terrainSampler);
         }
+
+        sectionRenderDispatcher.lock();
+        try {
+            sectionRenderDispatcher.uploadTerrainBuffersToGpu();
+        } finally {
+            sectionRenderDispatcher.unlock();
+        }
     }
 
     // Based on LevelRenderer#prepareChunkRenders
@@ -173,10 +180,6 @@ public class WorldBlockMesh {
         if (sectionRenderDispatcher != null) {
             sectionRenderDispatcher.lock();
             try {
-                try (Zone ignored = Profiler.get().zone("Upload WikiRenderer Mesh Global Buffers")) {
-                    sectionRenderDispatcher.uploadTerrainBuffersToGpu();
-                }
-
                 for (MeshRenderSection section : sortedSections) {
                     SectionMesh sectionMesh = section.getSectionMesh();
                     int uboIndex = -1;
@@ -256,8 +259,9 @@ public class WorldBlockMesh {
         for (MeshRenderSection renderSection : this.subMeshes.values()) {
             renderSection.blockEntities.forEach((blockPos, entity) -> {
                 SortedSet<BlockDestructionProgress> progresses = this.world.getDelegate().destructionProgress().get(blockPos.asLong());
+
                 ModelFeatureRenderer.CrumblingOverlay breakProgress;
-                if (!progresses.isEmpty()) {
+                if (progresses != null && !progresses.isEmpty()) { // this is nullable, idk why intellij thinks it's not
                     standardStack.pushPose();
                     standardStack.translate(blockPos.getX(), blockPos.getY(), blockPos.getZ());
                     breakProgress = new ModelFeatureRenderer.CrumblingOverlay(progresses.last().getProgress(), standardStack.last());

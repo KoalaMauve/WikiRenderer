@@ -1,6 +1,7 @@
 package com.pigicial.wikirenderer.mixin.entity;
 
 import com.mojang.blaze3d.vertex.VertexConsumer;
+import com.pigicial.wikirenderer.WikiRenderer;
 import com.pigicial.wikirenderer.render.entity.EntityRenderBoundsUtil;
 import net.minecraft.client.renderer.feature.RenderTypeFeatureRenderer;
 import net.minecraft.client.renderer.rendertype.RenderType;
@@ -14,7 +15,7 @@ public class RenderTypeFeatureRendererMixin {
 
     @Inject(method = "getVertexBuilder", at = @At("HEAD"), cancellable = true)
     public final void wikirenderer$getVertexBuilder(RenderType renderType, CallbackInfoReturnable<VertexConsumer> cir) {
-        if (EntityRenderBoundsUtil.currentBufferSource != null) {
+        if (WikiRenderer.inBoundsCalculation && EntityRenderBoundsUtil.currentBufferSource != null) {
             cir.setReturnValue(EntityRenderBoundsUtil.currentBufferSource);
         }
     }
