@@ -121,7 +121,6 @@ public class EntityCloner {
         elytraData.isometric$setRotZ((float) (-Math.PI / 12));
         playerClone.elytraAnimationState.tick();
 
-        playerClone.setId(Integer.MAX_VALUE);
         return playerClone;
     }
 

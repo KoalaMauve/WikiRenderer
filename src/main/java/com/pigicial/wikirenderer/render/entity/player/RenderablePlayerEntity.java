@@ -56,6 +56,8 @@ public class RenderablePlayerEntity extends LocalPlayer {
                 new ChatAbilities.Builder().build()
         );
 
+        this.setId(Integer.MAX_VALUE);
+
         if (profile.name().equals("Steve")) {
             skinTextures = DefaultPlayerSkin.getDefaultSkin();
             skinGrabber = CompletableFuture.completedFuture(null);
