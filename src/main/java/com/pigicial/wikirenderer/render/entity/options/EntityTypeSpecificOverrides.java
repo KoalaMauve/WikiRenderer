@@ -426,10 +426,9 @@ public class EntityTypeSpecificOverrides<S extends EntityRenderState> {
         registerOverrides(HappyGhastRenderState.class, overrides -> {
             overrides.registerEnumOverride("harnessColor", DyeColor.class, _ -> null, (state, value) -> {
                 if (value == null) {
-                    state.bodyItem = null;
+                    state.bodyItem = ItemStack.EMPTY;
                 } else {
-                    state.bodyItem = new ItemStack(Items.HARNESS.white());
-                    state.bodyItem.set(DataComponents.EQUIPPABLE, Equippable.harness(value));
+                    state.bodyItem = Items.HARNESS.pick(value).getDefaultInstance();
                 }
             });
             overrides.registerBooleanOverride("isRidden", s -> s.isRidden, (s, value) -> s.isRidden = value);
