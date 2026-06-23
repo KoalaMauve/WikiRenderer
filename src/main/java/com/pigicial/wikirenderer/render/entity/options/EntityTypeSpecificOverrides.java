@@ -676,7 +676,7 @@ public class EntityTypeSpecificOverrides<S extends EntityRenderState> {
                 s.variant = value;
                 if (value != null) {
                     s.mushroomModel.clear();
-                    BlockModelResolver blockModelResolver = ((MinecraftAccessor) Minecraft.getInstance()).wikirenderer$getBlockModelResolver();
+                    BlockModelResolver blockModelResolver = ((BlockEntityRenderDispatcherAccessor) Minecraft.getInstance().getBlockEntityRenderDispatcher()).wikirenderer$getBlockModelResolver();
                     blockModelResolver.update(s.mushroomModel, value.getBlockState(), MushroomCowRenderer.BLOCK_DISPLAY_CONTEXT);
                 }
             });
