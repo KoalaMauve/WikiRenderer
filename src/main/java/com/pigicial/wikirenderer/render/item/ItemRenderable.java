@@ -67,6 +67,10 @@ public class ItemRenderable extends ItemBasedRenderable<ItemRenderablePropertyBu
         return currentModelIndex;
     }
 
+    public @Nullable List<ItemModel> getModels() {
+        return models;
+    }
+
     @Override
     public String buildFileName(String preset) {
         String id = BuiltInRegistries.ITEM.getKey(this.stack.getItem()).getPath();
@@ -165,7 +169,7 @@ public class ItemRenderable extends ItemBasedRenderable<ItemRenderablePropertyBu
     @Override
     public List<List<Integer>> getTicksToFullyAnimate() {
         List<Integer> animationTimings = new LinkedList<>();
-        AnimationTimingUtil.scanTicksToFullyAnimateItem(stack, animationTimings);
+        AnimationTimingUtil.scanTicksToFullyAnimateItem(this, animationTimings);
         return List.of(animationTimings);
     }
 
