@@ -13,6 +13,7 @@ import com.pigicial.wikirenderer.textures.TextureDataProvider;
 import com.pigicial.wikirenderer.util.AnimationTimingUtil;
 import com.pigicial.wikirenderer.util.ItemNameUtil;
 import net.minecraft.client.Minecraft;
+import com.mojang.authlib.minecraft.MinecraftProfileTexture;
 import net.minecraft.client.renderer.SubmitNodeStorage;
 import net.minecraft.client.renderer.item.ItemStackRenderState;
 import net.minecraft.client.renderer.texture.OverlayTexture;
@@ -130,5 +131,25 @@ public class ItemRenderable extends ItemBasedRenderable<ItemRenderablePropertyBu
         List<Integer> animationTimings = new LinkedList<>();
         AnimationTimingUtil.scanTicksToFullyAnimateItem(stack, animationTimings);
         return List.of(animationTimings);
+    }
+
+    @Override
+    public Map<String, String> getPngTextMetadata() {
+        TextureData headTextureData = PlayerTextureUtils.getTextureDataFromPlayerHead(this.stack);
+        if (headTextureData == null) {
+            return Map.of();
+        }
+
+        MinecraftProfileTexture skinTexture = headTextureData.payload().textures().get(MinecraftProfileTexture.Type.SKIN);
+        if (skinTexture == null) {
+            return Map.of();
+        }
+
+        String textureId = skinTexture.getHash();
+        if (textureId == null || textureId.isBlank()) {
+            return Map.of();
+        }
+
+        return Map.of("texture_id", textureId);
     }
 }

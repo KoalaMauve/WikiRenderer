@@ -698,7 +698,7 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
         }
 
         RenderableDispatcher.drawIntoImage(this, this.renderable, tickDelta, this.getTimeSinceCreationMs(), renderable.getExportResolution(), renderable.shouldCrop(), dataConsumer)
-                .thenCompose(img -> FileIO.saveImage(img, exportPath).whenComplete((_, _) -> img.close()))
+            .thenCompose(img -> FileIO.saveImage(img, exportPath, this.renderable.getPngTextMetadata()).whenComplete((_, _) -> img.close()))
                 .whenComplete((imageFile, throwable) -> {
                     capturing = false;
                     if (throwable != null) {
